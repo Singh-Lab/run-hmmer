@@ -302,7 +302,7 @@ if __name__ == "__main__":
   parser.add_argument('--end', '-e', type=int,
                       help='Ending 0-index of subset of domains from ' + HMMPATH + ' to run on.',
                       default=len(hmms),
-                      choices=range(len(hmms)))
+                      choices=range(1, len(hmms) + 1))
 
   parser.add_argument('--pfam_version', '-p', type=int,
                       help='Pfam version we are running on.',
