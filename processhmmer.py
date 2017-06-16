@@ -11,6 +11,7 @@ import os
 import sys
 import gzip
 import argparse
+import time
 from string import ascii_letters
 from string import digits
 from random import choice
@@ -22,7 +23,7 @@ from hmmer import finddom
 ####################################################################################################
 
 # Path to where data is stored
-DATAPATH = '/Genomics/grid/users/snadimpa/data/'
+DATAPATH = os.getcwd() + '/'
 
 PFAMVERSION = '31'  # Version of Pfam we are using
 
@@ -33,7 +34,7 @@ HMMPATH = DATAPATH + 'pfam/hmms-v' + PFAMVERSION + '/'
 # Full paths to the FASTA file of protein sequences that we want to search
 #  for domains in. Note that hmmsearch causes a fuss if this files are zipped
 #  at all.. (so make sure it is not)
-PROTFILE = DATAPATH + 'bioliphuman/Homo_sapiens.GRCh37-ensembl-verified-ALL.fa'
+PROTFILE = DATAPATH + 'human_test_sequences.fa'
 
 # Unprocessed HMMER results will go here (good idea not to delete, in case of a crash or debugging)
 TEMPORARY_HMMER_RESULTS = DATAPATH + 'domains/hmmres-v' + PFAMVERSION + '/'
@@ -303,6 +304,11 @@ if __name__ == "__main__":
                       default=len(hmms),
                       choices=range(len(hmms)))
 
+  parser.add_argument('--pfam_version', '-p', type=int,
+                      help='Pfam version we are running on.',
+                      default=31,
+                      choices=range(28,32))
+
   args = parser.parse_args()
 
   # Customize log file name if need be:
@@ -357,5 +363,18 @@ if __name__ == "__main__":
 
     # (4) Find the full matches (match state -> sequence index -> sequence residue information):
     if len(whichseqs) > 0:
+      sys.stderr.write('Processing '+hmm+'-v'+PFAMVERSION+'...')
+
+      # start the clock to measure performance
+      start = time.time()
+
       outfile = PROCESSED_HMMER_RESULTS + hmm + '-v' + PFAMVERSION + '.hmmres.gz'
       find_domain_matches(hmmfile, outfile, PROTFILE, whichseqs)
+
+      # end the clock and print total elapsed time:
+      end = time.time()
+      total_seconds = end - start
+      m, s = divmod(total_seconds, 60)
+      h, m = divmod(m, 60)
+      d, h = divmod(h, 24)
+      sys.stderr.write('Done ('+':'.join(map(lambda x: str(int(x)).zfill(2), [d, h, m, s]))+')\n')
