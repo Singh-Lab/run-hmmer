@@ -2,7 +2,7 @@
 
 """
 Download latest version of Pfam and set up standard directories to run processhmmer.py
-Direct questions to Shilpa Nadimpalli Kobren (snadimpa@princeton.edu) 
+Contact snadimpa@princeton.edu with questions.
 """
 
 import os
@@ -21,9 +21,9 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
   """
 
   # Download the current release notes and save to a temporary directory
-  os.system('wget ' + current_release_loc + ' -O /tmp/pfam-current-release.txt')
+  os.system('wget ' + current_release_loc + ' -O pfam-current-release.txt')
 
-  with open('/tmp/pfam-current-release.txt') as x:
+  with open('pfam-current-release.txt') as x:
     x.next()
     release = x.next().strip().split()[1]  # RELEASE information always on the second line
 
@@ -34,7 +34,7 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
         break
 
   # Remove the temporary file:
-  os.system('rm /tmp/pfam-current-release.txt')
+  os.system('rm pfam-current-release.txt')
 
   month_abbreviations = {'01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May',
                          '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October',
@@ -48,7 +48,7 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
 
 ####################################################################################################
 
-def pfam_hmm_download(output_directory='hmms-v31/',
+def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
                       hmms_link='ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz'):
   """
   :param output_directory: full path to a directory where all separate HMM files will be written to
@@ -61,7 +61,7 @@ def pfam_hmm_download(output_directory='hmms-v31/',
     os.makedirs(output_directory)
 
   # Download the file containing all Pfam-A HMMs of interest:
-  temporary_hmm_file = '/tmp/Pfam-A.hmm-current' + ('.gz' if hmms_link.endswith('gz') else '.txt')
+  temporary_hmm_file = 'Pfam-A.current-v'+pfam_version+'-release.hmm' + ('.gz' if hmms_link.endswith('gz') else '.txt')
   os.system('wget ' + hmms_link + ' -O ' + temporary_hmm_file)
 
   # Keep track of current HMM accession and name (to print out at the appropriate time)
@@ -70,10 +70,11 @@ def pfam_hmm_download(output_directory='hmms-v31/',
   # Keep track of all lines belonging to this HMM:
   current_lines = []
 
-  hmm_infile = gzip.open(temporary_hmm_file) if temporary_hmm_file.endswith('gz') \
-    else open(temporary_hmm_file)
+  hmm_infile = gzip.open(temporary_hmm_file) if temporary_hmm_file.endswith('gz') else open(temporary_hmm_file)
 
   for l in hmm_infile:
+    current_lines.append(l)
+
     if l.strip() == '//':
       if len(current_lines) > 0:
         hmm_outfile = open(output_directory + current_accession.split('.')[0] + '_' + current_name + '.hmm', 'w')
@@ -81,8 +82,8 @@ def pfam_hmm_download(output_directory='hmms-v31/',
         hmm_outfile.close()
       current_name, current_accession = '', ''
       current_lines = []
+
     else:
-      current_lines.append(l)
       if l.startswith('NAME '):
         current_name = l.strip().split()[-1]
       if l.startswith('ACC '):
@@ -103,10 +104,15 @@ if __name__ == "__main__":
   sys.stderr.write('Pfam version ' + version + ', released ' + date + ', contains ' + entries + ' total HMMs.\n')
 
   # Set up all directories here as needed:
-  DATAPATH = os.getcwd()
+  DATAPATH = os.getcwd() + '/'
+  pfam_version = version[:version.rfind('.')]
 
-  for directory in ['pfam','pfam/hmms-v'+version, 'domains', 'domains/hmmres-v'+version, 'domains/processed-v'+version]:
+  for directory in ['pfam',
+                    'pfam/hmms-v'+pfam_version,
+                    'domains',
+                    'domains/hmmres-v'+pfam_version,
+                    'domains/processed-v'+pfam_version]:
     call(['mkdir', DATAPATH+directory])
 
   # Download the most recent version of Pfam, storing HMMs in the proper directory:
-  pfam_hmm_download(DATAPATH+'pfam/hmms-v'+version)
+  pfam_hmm_download(DATAPATH+'pfam/hmms-v'+pfam_version+'/', pfam_version)

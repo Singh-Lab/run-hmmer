@@ -1,15 +1,11 @@
 #!/usr/bin/python
 
-######################################################################
-# createdomainoutput.py                                              #
-# Author:  Shilpa Nadimpalli Kobren                                  #
-# Version: 20170403                                                  #
-# Goal:    Given formatted by-hmm HMMER hits, concatenate all        #
-#          results to remove duplicates and order results, then also #
-#          create a file listing ALL complete domains that passed    #
-#          their gathering thresholds.                               #
-# Usage:   createdomainoutput.py                                     #
-######################################################################
+"""
+Given formatted by-HMM HMMER hits, concatenate all results to remove duplications and order results, 
+then also create a file listing ALL complete domains that passed their gathering thresholds.
+
+Contact snadimpa@princeton.edu with questions.
+"""
 
 import os
 import sys
@@ -17,13 +13,12 @@ import gzip
 import math
 import argparse
 
-
-######################################################################
-#                    CONSTANTS -- UPDATE THESE!!!                    #
-######################################################################
+####################################################################################################
+# CONSTANTS -- UPDATE THESE!!!
+####################################################################################################
 
 # Path to where data is stored
-DATAPATH = '/Genomics/grid/users/snadimpa/data/'
+DATAPATH = os.getcwd() + '/'
 
 PFAMVERSION = '31'  # Version of Pfam we are using
 
@@ -34,10 +29,10 @@ HMMPATH = DATAPATH + 'pfam/hmms-v' + PFAMVERSION + '/'
 # Full paths to the FASTA file of protein sequences that we want to search
 #  for domains in. Note that hmmsearch causes a fuss if this file is zipped
 #  at all.. (so make sure it is not)
-PROTFILE = DATAPATH + 'bioliphuman/Homo_sapiens.GRCh37-ensembl-verified-ALL.fa'
+PROTFILE = DATAPATH + 'human_test_sequences.fa'
 
 # Output processed from the processhmmer.py script is here, for each domain (e.g., v31/PF00096_zf-C2H2-v31.hmmres.gz)
-PROCESSED_HMMER_RESULTS = DATAPATH + 'domains/human/'
+PROCESSED_HMMER_RESULTS = DATAPATH + 'domains/processed-v' + PFAMVERSION + '/'
 
 # Release dates and number of entries can always be found for all Pfam releases at
 # ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/relnotes.txt
@@ -48,11 +43,11 @@ HMMINFO = {'27': {'date': 'March 2013', 'entries': '14,831'},
            '31': {'date': 'March 2017', 'entries': '16,712'}}
 
 
-######################################################################
+####################################################################################################
 
 def create_allhmmresbyprot(pfamversion=PFAMVERSION,
-                           inputdir=PROCESSED_HMMER_RESULTS+'v31/',
-                           outfile=PROCESSED_HMMER_RESULTS+'allhmmresbyprot-v31.tsv.gz'):
+                           inputdir=PROCESSED_HMMER_RESULTS,
+                           outfile=DATAPATH + 'domains/allhmmresbyprot-v31.tsv.gz'):
   """
   :param pfamversion: Which Pfam version to use? 31 is our standard
   :param inputdir: location of all .hmmres.gz files generated from the processhmmer.py script
@@ -100,31 +95,7 @@ def create_allhmmresbyprot(pfamversion=PFAMVERSION,
   sys.stderr.write(str(totaldomainhits)+' total domains!\n')
 
 
-######################################################################
-
-def find_interaction_domains(biolipscorefile=DATAPATH+'bioliphmmer/v31/ALL-biolipsummary-mindist.txt.gz'):
-  """
-  :param biolipscorefile: full path to a weight file, where we have weights for certain Pfam domains
-  :return: a set of domains that we have weights for
-           NOTE: this is only relevant for my current project....
-  """
-
-  allhmms = set()
-
-  x = gzip.open(biolipscorefile) if biolipscorefile.endswith('gz') else open(biolipscorefile)
-  for l in x:
-    if l.startswith('#'):
-      continue
-    pfamid, _, _, weightedscore, _ = l[:-1].split('\t')[:5]
-
-    if float(weightedscore) > 0:
-      allhmms.add(pfamid)
-  x.close()
-
-  return allhmms
-
-
-######################################################################
+####################################################################################################
 
 def find_domains_from_file(hmmresfile=PROCESSED_HMMER_RESULTS+'allhmmresbyprot-v31.tsv.gz'):
   """
@@ -139,7 +110,7 @@ def find_domains_from_file(hmmresfile=PROCESSED_HMMER_RESULTS+'allhmmresbyprot-v
   return allhmms
 
 
-######################################################################
+####################################################################################################
 
 def get_high_information_content(hmmfile):
   """
@@ -170,7 +141,7 @@ def get_high_information_content(hmmfile):
   return requiredstates
 
 
-######################################################################
+####################################################################################################
 
 def return_passing_hits(currenthits, gatheringthresholds):
   """
@@ -199,11 +170,11 @@ def return_passing_hits(currenthits, gatheringthresholds):
   return passing_hits
 
 
-######################################################################
+####################################################################################################
 
 def create_domsbyprot(pfamversion=PFAMVERSION,
-                      hmmresfile=PROCESSED_HMMER_RESULTS+'allhmmresbyprot-v31.tsv.gz',
-                      outfile=PROCESSED_HMMER_RESULTS+'domsbyprot-v31.txt.gz'):
+                      hmmresfile=DATAPATH + 'domains/allhmmresbyprot-v31.tsv.gz',
+                      outfile=DATAPATH + 'domains/domsbyprot-v31.txt.gz'):
   """
   :param pfamversion: version of the Pfam database we are using (default is 31)
   :param hmmresfile: full path to a file generated by create_allhmmresbyprot()
@@ -214,13 +185,10 @@ def create_domsbyprot(pfamversion=PFAMVERSION,
   :return: 
   """
 
-  path_to_hmms = DATAPATH+'pfam/hmms-v'+pfamversion+'/'
+  path_to_hmms = HMMPATH
 
   # Find all HMMs to consider:
-  if False:
-    allhmms = find_interaction_domains(DATAPATH+'bioliphmmer/v'+pfamversion+'/ALL-biolipsummary-mindist.txt.gz')
-  else:
-    allhmms = find_domains_from_file(hmmresfile)
+  allhmms = find_domains_from_file(hmmresfile)
 
   # Determine the set of "required" states for all HMMs, where relevant
   requiredstates = {}  # hmm_id -> matchstate -> amino acid required
@@ -338,7 +306,7 @@ def create_domsbyprot(pfamversion=PFAMVERSION,
                    '(3) passed the gathering threshold!\n')
 
 
-######################################################################
+####################################################################################################
 
 if __name__ == "__main__":
 
@@ -353,20 +321,26 @@ if __name__ == "__main__":
                       help='Pfam database version (e.g., 31)',
                       default=PFAMVERSION,
                       choices=range(27, 32))
+  parser.add_argument('--function', type=str,
+                      help='Processing step to run (e.g., concatenate_hmmer_results, filter_domains)',
+                      default='concatenate_hmmer_results',
+                      choices=['concatenate_hmmer_results', 'filter_domains'])
 
   args = parser.parse_args()
 
   PFAMVERSION = str(args.pfam_version)
 
-  HMMER_RESULTS = PROCESSED_HMMER_RESULTS+'/v' + PFAMVERSION + '/'
-  HMMER_RESULT_FILE = PROCESSED_HMMER_RESULTS+'allhmmresbyprot-v' + PFAMVERSION + '.tsv.gz'
-  DOMAIN_RESULT_FILE = PROCESSED_HMMER_RESULTS+'domsbyprot-v' + PFAMVERSION + '.txt.gz'
+  HMMER_RESULTS = PROCESSED_HMMER_RESULTS
+  HMMER_RESULT_FILE = DATAPATH + 'domains/allhmmresbyprot-v' + PFAMVERSION + '.tsv.gz'
+  DOMAIN_RESULT_FILE = DATAPATH + 'domains/domsbyprot-v' + PFAMVERSION + '.txt.gz'
 
-  # Concatenate all results from multiple files, removing duplicates as well as we can
-  create_allhmmresbyprot(PFAMVERSION, HMMER_RESULTS, HMMER_RESULT_FILE)
+  if args.function == 'concatenate_hmmer_results':
+    # Concatenate all results from multiple files, removing duplicates as well as we can
+    create_allhmmresbyprot(PFAMVERSION, HMMER_RESULTS, HMMER_RESULT_FILE)
 
-  # Restrict to domains that:
-  # (1) are complete (i.e., matched from the very start to the very end of the HMM)
-  # (2) passed the gathering threshold (taking into account both domain- and sequence-based cutoffs)
-  # (3) have the appropriate residue at high information content positions (to remove "deprecated" domains)
-  create_domsbyprot(PFAMVERSION, HMMER_RESULT_FILE, DOMAIN_RESULT_FILE)
+  if args.function == 'filter_domains':
+    # Restrict to domains that:
+    # (1) are complete (i.e., matched from the very start to the very end of the HMM)
+    # (2) passed the gathering threshold (taking into account both domain- and sequence-based cutoffs)
+    # (3) have the appropriate residue at high information content positions (to remove "deprecated" domains)
+    create_domsbyprot(PFAMVERSION, HMMER_RESULT_FILE, DOMAIN_RESULT_FILE)
