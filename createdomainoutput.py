@@ -26,9 +26,8 @@ PFAMVERSION = '31'  # Version of Pfam we are using
 #  PfamID_PfamName.hmm (e.g., PF00096_zf-C2H2.hmm)
 HMMPATH = DATAPATH + 'pfam/hmms-v' + PFAMVERSION + '/'
 
-# Full paths to the FASTA file of protein sequences that we want to search
-#  for domains in. Note that hmmsearch causes a fuss if this file is zipped
-#  at all.. (so make sure it is not)
+# Full paths to the FASTA file of protein sequences that we supposedly ran on:
+#  (for the sake of filling in the header properly)
 PROTFILE = DATAPATH + 'human_test_sequences.fa'
 
 # Output processed from the processhmmer.py script is here, for each domain (e.g., v31/PF00096_zf-C2H2-v31.hmmres.gz)
@@ -56,7 +55,7 @@ def create_allhmmresbyprot(pfamversion=PFAMVERSION,
            between the two versions of HMMER
   """
   output_handle = gzip.open(outfile, 'w') if outfile.endswith('gz') else open(outfile, 'w')
-  output_handle.write('# HMMER 2.3.2 and HMMER 3.0 results on all protein sequences found in '+PROTFILE+'\n')
+  output_handle.write('# HMMER 2.3.2 and HMMER 3.1b2 results on all protein sequences found in '+PROTFILE+'\n')
   output_handle.write('# Pfam version '+pfamversion+'.0, released '+HMMINFO[pfamversion]['date']+
                       ', containing '+HMMINFO[pfamversion]['entries']+' entries\n')
 
@@ -287,11 +286,11 @@ def create_domsbyprot(pfamversion=PFAMVERSION,
   output_handle = gzip.open(outfile, 'w') if outfile.endswith('gz') else open(outfile, 'w')
   output_handle.write('# All COMPLETE Pfam domains (version '+pfamversion+'.0, ' +
                       HMMINFO[pfamversion]['date']+', '+HMMINFO[pfamversion]['entries']+' entries) that ' +
-                      'passed the gathering threshold found in all sequences from\n')
+                      'passed the gathering threshold found in all amino acid sequences from\n')
   output_handle.write('# '+PROTFILE+'\n')
   output_handle.write('# Original, unfiltered by-domain HMMER results found in ' +
-                      PROCESSED_HMMER_RESULTS+'v'+pfamversion+'/ directory\n')
-  output_handle.write('\t'.join(['#EnsemblProtID', 'PfamHMMID', 'matchstate:AA-0-index:AA-value']) + '\n')
+                      PROCESSED_HMMER_RESULTS+' directory\n')
+  output_handle.write('\t'.join(['#Protein_Sequence_ID', 'Pfam_HMM_ID', 'matchstate:AA-0-index:AA-value']) + '\n')
 
   final_domain_count = 0
   for pID in sorted(domsbyprot.keys()):
