@@ -1,14 +1,11 @@
 #!/usr/bin/python
 
-######################################################################
-# processhmmer.py                                                    #
-# Author:  Shilpa Nadimpalli Kobren                                  #
-# Version: 20120609                                                  #
-# Goal:    Call relevant functions from the hmmer.py script in order #
-#          to find matches to particular Pfam domains (and process   #
-#          the output from HMMER.                                    #
-# Usage:   processhmmer.py                                           #
-######################################################################
+"""
+Call relevant functions from the hmmer.py script in order to find matches to 
+particular Pfam domains (and process the output from HMMER).
+
+Contact snadimpa@princeton.edu with questions.
+"""
 
 import os
 import sys
@@ -20,10 +17,9 @@ from random import choice
 from Bio import pairwise2
 from hmmer import finddom
 
-
-######################################################################
-#                    CONSTANTS -- UPDATE THESE!!!                    #
-######################################################################
+####################################################################################################
+# CONSTANTS -- UPDATE THESE!!!
+####################################################################################################
 
 # Path to where data is stored
 DATAPATH = '/Genomics/grid/users/snadimpa/data/'
@@ -40,25 +36,29 @@ HMMPATH = DATAPATH + 'pfam/hmms-v' + PFAMVERSION + '/'
 PROTFILE = DATAPATH + 'bioliphuman/Homo_sapiens.GRCh37-ensembl-verified-ALL.fa'
 
 # Unprocessed HMMER results will go here (good idea not to delete, in case of a crash or debugging)
-TEMPORARY_HMMER_RESULTS = DATAPATH + 'bioliphuman/hmmres-v' + PFAMVERSION + '/'
+TEMPORARY_HMMER_RESULTS = DATAPATH + 'domains/hmmres-v' + PFAMVERSION + '/'
 
 # Final, processed output will go here, for each domain (e.g., PF00096_zf-C2H2-v31.hmmres.gz)
-PROCESSED_HMMER_RESULTS = DATAPATH + 'domains/human/'
+PROCESSED_HMMER_RESULTS = DATAPATH + 'domains/processed-v' + PFAMVERSION + '/'
 
 # In case we had a match that we couldn't understand nor rescue, keep track of it:
 LOGFILE = PROCESSED_HMMER_RESULTS + 'problems.log'
 
 
-######################################################################
+####################################################################################################
 
 def idgen(size=20, chars=ascii_letters + digits):
-  """Generates a random string (for use primarily as a temporary file name) 
-  of size n and from uppercase, lowercase ASCII letters and numbers 0-9."""
+  """
+  :param size: length of string to generate
+  :param chars: characters to randomly draw from in resulting string
+  :return: string of length size containing random characters drawn from chars with replacement 
+           (intended use as a temporary file name); lowercase & uppercase letters and digits 0-9
+  """
 
   return ''.join(choice(chars) for _ in xrange(size))
 
 
-######################################################################
+####################################################################################################
 
 def process_hmmer_output(hmmresfile, outputfile, pfam):
   """
@@ -192,7 +192,26 @@ def process_hmmer_output(hmmresfile, outputfile, pfam):
   output_handle.close()
 
 
-######################################################################
+####################################################################################################
+
+def get_pfamseq(hmm_file):
+  """
+  :param hmm_file: full path to a Pfam HMM file
+  :return: consensus sequence representing the HMM, needed to parse hmmsearch results (v2.3.2) to
+           get the match state -> sequence index -> amino acid mapping
+  """
+
+  pfamseq = []
+  for current_line in open(hmm_file):
+    i = current_line.strip().split()
+    if len(i) == 26 and i[21].isdigit():
+      pfamseq.append(i[22])
+  pfamseq = ''.join(pfamseq)
+
+  return pfamseq
+
+
+####################################################################################################
 
 def find_domain_matches(hmm_file, output_file, infile, ids=set()):
   """
@@ -206,12 +225,7 @@ def find_domain_matches(hmm_file, output_file, infile, ids=set()):
   """
 
   # Pfam "consensus" sequence is needed to parse hmmsearch results; obtained from the raw .hmm file:
-  pfamseq = []
-  for current_line in open(hmm_file):
-    i = current_line.strip().split()
-    if len(i) == 26 and i[21].isdigit():
-      pfamseq.append(i[22])
-  pfamseq = ''.join(pfamseq)
+  pfamseq = get_pfamseq(hmm_file)
 
   chmm = hmm_file.split('/')[-1].replace('.hmm', '')  # PfamID_PfamName
 
@@ -273,7 +287,7 @@ def find_domain_matches(hmm_file, output_file, infile, ids=set()):
 if __name__ == "__main__":
 
   # All possible HMMs that we can run on:
-  hmms = sorted([a.replace('hmm', '') for a in os.listdir(HMMPATH) if a.startswith('PF') and a.endswith('.hmm')])
+  hmms = sorted([a.replace('.hmm', '') for a in os.listdir(HMMPATH) if a.startswith('PF') and a.endswith('.hmm')])
 
   # In order to parallelize, we can specify a *subset* of these domains to run HMMER on.
   # We have the option of specifying via the command line:
@@ -286,11 +300,15 @@ if __name__ == "__main__":
 
   parser.add_argument('--end', '-e', type=int,
                       help='Ending 0-index of subset of domains from ' + HMMPATH + ' to run on.',
-                      default=len(hmms)-1,
+                      default=len(hmms),
                       choices=range(len(hmms)))
 
   args = parser.parse_args()
-  hmms = hmms[args.start:args.end+1]  # Subset to a range of HMMs if it was specified
+
+  # Customize log file name if need be:
+  if not (args.start == 0 and args.end == len(hmms)):
+    LOGFILE = LOGFILE.replace('.log', '-'+str(args.start)+'-'+str(args.end)+'.log')
+    hmms = hmms[args.start:args.end]  # Subset to a range of HMMs if it was specified
 
   # Get set of all sequence IDs in input file:
   allseqs = set()
@@ -332,7 +350,7 @@ if __name__ == "__main__":
           continue
         whichseqs.add(l.strip().split()[0])
 
-    if len(whichseqs) < 1:
+    if False and len(whichseqs) < 1:
       sys.stderr.write('Failed to get preliminary results for '+hmm+'! ' +
                        'Running on all ' + str(len(allseqs)) + ' sequences...\n')
       whichseqs = allseqs
