@@ -2,7 +2,7 @@
 Run both HMMER 2.3.2 and HMMER 3 on a set of Pfam HMMs, parse and combine results.
 
 ## Downloading and installing HMMER
-HMMER 2.3.2 (released October 2003) and HMMER 3.0 (released March 2010) can both be downloaded from http://hmmer.org/download.html. I recommend installing HMMER 2.3.2 first (note that the scripts in this repository require the HMMER 2.3.2 binaries to be renamed with the "232" suffix as follows):
+HMMER 2.3.2 (released October 2003) and HMMER 3.1b2 (released February 2015) can both be downloaded from http://hmmer.org/download.html. I recommend installing HMMER 2.3.2 first (note that the scripts in this repository require the HMMER 2.3.2 binaries to be renamed with a "232" suffix):
 
 ```bash
 sh install_hmmer.sh
@@ -23,17 +23,19 @@ The general format to run is as follows, where the ending value is 1 more than t
 python processhmmer.py --start 0 --end 10
 ```
 
-**NOTE:** You *will* need to edit this file with your hardcoded directories, protein input file (in FASTA format), and the version of Pfam you are running on.
+**NOTE 1:** You *will* need to edit this file with your hardcoded directories, protein input file (in FASTA format), and the version of Pfam you are running on. 
+
+**NOTE 2:** This step should be run in parallel on the cluster!
 
 ## Combining HMMER output
 
-We run both HMMER 2.3.2 and HMMER 3.0 and therefore expect lots of duplicate domains. We combine all output from individual Pfam HMMs with the following call, which will produce a file called allhmmresbyprot-v31.txt.gz. (You can change this name in the script.)
+We run both HMMER 2.3.2 and HMMER 3.1b2 and therefore expect lots of duplicate domains. We combine all output across all Pfam HMMs with the following call, which will produce a file called allhmmresbyprot-v31.txt.gz. (You can change this name, and perhaps also what subset of HMM results you want to include, in the script.)
 
 ```bash
 python createdomainoutput.py --function concatenate_hmmer_results
 ```
 
-We **must** run this function first before calling the following to restrict to domains that:
+We **must** run the previous function before calling the following, as the following depends on the intermediate results. We run this to restrict to domains that:
 
 * are complete (i.e., matched from the very start to the very end of the HMM)
 * passed the gathering threshold (taking into account both domain- and sequence-based cutoffs)
