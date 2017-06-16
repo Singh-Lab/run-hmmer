@@ -248,8 +248,8 @@ def create_domsbyprot(pfamversion=PFAMVERSION,
       badmatch = False
       for hmmState, seqAA in mstatetoseq:
         if hmmState in requiredstates[hmm_id] and seqAA != requiredstates[hmm_id][hmmState]:
-          sys.stderr.write('In HMM ' + hmm_id + ', we expected ' + requiredstates[hmm_id][hmmState] +
-                           ' in state ' + hmmState + ' but saw ' + seqAA + '\n')
+          #sys.stderr.write('In HMM ' + hmm_id + ', we expected ' + requiredstates[hmm_id][hmmState] +
+          #                 ' in state ' + hmmState + ' but saw ' + seqAA + '\n')
           badmatch = True
           break
       if badmatch:

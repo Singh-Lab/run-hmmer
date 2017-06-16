@@ -377,4 +377,5 @@ if __name__ == "__main__":
       m, s = divmod(total_seconds, 60)
       h, m = divmod(m, 60)
       d, h = divmod(h, 24)
-      sys.stderr.write('Done ('+':'.join(map(lambda x: str(int(x)).zfill(2), [d, h, m, s]))+')\n')
+      sys.stderr.write('Finished '+str(len(whichseqs))+' sequences in '+
+                       ':'.join(map(lambda x: str(int(x)).zfill(2), [d, h, m, s]))+'!\n')
