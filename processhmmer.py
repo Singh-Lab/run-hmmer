@@ -238,7 +238,11 @@ def find_domain_matches(hmm_file, output_file, infile, ids=set()):
 
   # NOW, let's search, seq by seq...  
   input_handle = gzip.open(infile) if infile.endswith('gz') else open(infile)
-  for current_line in input_handle:
+  while True:
+    current_line = input_handle.readline()
+    if not current_line:
+      break
+
     # Check if this is a sequence we actually want to run on:
     if current_line.startswith('>'):
       sequence_id = current_line[1:-1].split()[0]
@@ -250,9 +254,22 @@ def find_domain_matches(hmm_file, output_file, infile, ids=set()):
                   '/tmp/'+idgen()+'.hmmres1']  # complete parsed output
         
       # Write out current header and following sequence as input for hmmsearch
-      # NOTE: this assumes that each sequence in the FASTA file is on one continuous line (without breaks)
+      current_line_position = input_handle.tell()  # keep track of our current file location
+      next_line = input_handle.readline()  # and read in the following line
+      if not next_line:
+        input_handle.seek(current_line_position)  # go back one, and reset.
+        continue
       sequence_handle = open(tmpfiles[0], 'w')
-      sequence_handle.write(current_line + input_handle.next())
+      sequence_handle.write(current_line)
+
+      while not next_line.startswith('>'):
+        sequence_handle.write(next_line.strip())
+        current_line_position = input_handle.tell()
+        next_line = input_handle.readline()
+        if not next_line:
+          break
+      input_handle.seek(current_line_position)  # reset to the last line for beginning of loop.
+      sequence_handle.write('\n')
       sequence_handle.close()
   
       # Now, RUN hmmsearch for EACH hmmID in our list.
