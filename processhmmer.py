@@ -394,5 +394,5 @@ if __name__ == "__main__":
       m, s = divmod(total_seconds, 60)
       h, m = divmod(m, 60)
       d, h = divmod(h, 24)
-      sys.stderr.write('Finished '+str(len(whichseqs))+' sequences in '+
+      sys.stderr.write(hmm+': processed '+str(len(whichseqs))+' sequences in '+
                        ':'.join(map(lambda x: str(int(x)).zfill(2), [d, h, m, s]))+'!\n')
