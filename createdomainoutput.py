@@ -336,10 +336,16 @@ if __name__ == "__main__":
   if args.function == 'concatenate_hmmer_results':
     # Concatenate all results from multiple files, removing duplicates as well as we can
     create_allhmmresbyprot(PFAMVERSION, HMMER_RESULTS, HMMER_RESULT_FILE)
+    sys.stderr.write('For final, filtered output, remember to run:\n' + 
+                     'python '+sys.argv[1]+' --function filter_domains\n')
 
   if args.function == 'filter_domains':
     # Restrict to domains that:
     # (1) are complete (i.e., matched from the very start to the very end of the HMM)
     # (2) passed the gathering threshold (taking into account both domain- and sequence-based cutoffs)
     # (3) have the appropriate residue at high information content positions (to remove "deprecated" domains)
+    if not os.path.isfile(HMMER_RESULT_FILE):
+      sys.stderr.write('No such file: '+HMMER_RESULT_FILE+'!\n' + 
+                       'Please run: python '+sys.argv[1]+' --function concatenate_hmmer_results\n')
+           
     create_domsbyprot(PFAMVERSION, HMMER_RESULT_FILE, DOMAIN_RESULT_FILE)
