@@ -20,12 +20,12 @@ python download_pfam.py --path_to_pfam pfam/
 The general format to run is as follows, where the ending value is 1 more than the actual ending 0-index. For instance, to run on HMMs 0, 1, and 2, we would call processhmmer.py with --start 0 and --end **3**.
 
 ```bash
-python processhmmer.py --path_to_pfam pfam/ 
-                       --pfam_version 31 
-                       --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file> 
-                       --path_to_results domains/ 
-                       --start 0 
-                       --end 10
+python process_hmmer.py --path_to_pfam pfam/ 
+                        --pfam_version 31 
+                        --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file> 
+                        --path_to_results domains/ 
+                        --start 0 
+                        --end 10
 ```
 
 **NOTE:** This step should be run in parallel on the cluster!
@@ -35,11 +35,11 @@ python processhmmer.py --path_to_pfam pfam/
 We run both HMMER 2.3.2 and HMMER 3.1b2 and therefore expect lots of duplicate domains. We combine all output across all Pfam HMMs with the following call, which will produce a file called allhmmresbyprot-v31.txt.gz. (You can change this name, and perhaps also what subset of HMM results you want to include, in the script.)
 
 ```bash
-python createdomainoutput.py --concatenate_hmmer_results 
-                             --path_to_pfam pfam/
-                             --pfam_version 31
-                             --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
-                             --path_to_results domains/
+python create_domain_output.py --concatenate_hmmer_results 
+                               --path_to_pfam pfam/
+                               --pfam_version 31
+                               --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
+                               --path_to_results domains/
 ```
 
 We **must** run the previous function before calling the following, as the following depends on the intermediate results. We run this to restrict to domains that:
@@ -49,11 +49,11 @@ We **must** run the previous function before calling the following, as the follo
 * have the appropriate residue at high information content positions (to remove "deprecated" domains)
 
 ```bash
-python createdomainoutput.py --filter_domains
-                             --path_to_pfam pfam/
-                             --pfam_version 31
-                             --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
-                             --path_to_results domains/
+python create_domain_output.py --filter_domains
+                               --path_to_pfam pfam/
+                               --pfam_version 31
+                               --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
+                               --path_to_results domains/
 ```
 
 This produces a single, beautiful file (called domsbyprot.txt.gz) with all the domains from your original FASTA file.
