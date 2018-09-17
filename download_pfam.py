@@ -8,6 +8,7 @@ Contact snadimpa@princeton.edu with questions.
 import os
 import gzip
 import sys
+import argparse
 from subprocess import call
 
 ####################################################################################################
@@ -21,7 +22,7 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
   """
 
   # Download the current release notes and save to a temporary directory
-  os.system('wget ' + current_release_loc + ' -O pfam-current-release.txt')
+  call(['wget', current_release_loc, '-O', 'pfam-current-release.txt'])
 
   with open('pfam-current-release.txt') as x:
     x.next()
@@ -34,7 +35,7 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
         break
 
   # Remove the temporary file:
-  os.system('rm pfam-current-release.txt')
+  call(['rm', 'pfam-current-release.txt'])
 
   month_abbreviations = {'01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May',
                          '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October',
@@ -57,12 +58,12 @@ def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
   """
 
   # Create output directory if need be:
-  if not os.path.exists(output_directory):
-    os.makedirs(output_directory)
+  if not os.path.isdir(output_directory):
+    call(['mkdir', output_directory])
 
   # Download the file containing all Pfam-A HMMs of interest:
   temporary_hmm_file = 'Pfam-A.current-v'+pfam_version+'-release.hmm' + ('.gz' if hmms_link.endswith('gz') else '.txt')
-  os.system('wget ' + hmms_link + ' -O ' + temporary_hmm_file)
+  call(['wget', hmms_link, '-O', temporary_hmm_file])
 
   # Keep track of current HMM accession and name (to print out at the appropriate time)
   current_name, current_accession = '', ''
@@ -90,7 +91,7 @@ def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
         current_accession = l.strip().split()[-1]
   hmm_infile.close()
 
-  os.system('rm ' + temporary_hmm_file)
+  call(['rm', temporary_hmm_file])
 
   sys.stderr.write('Finished processing all HMMs from ' + hmms_link + ' into ' + output_directory + '\n')
 
@@ -99,20 +100,22 @@ def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
 
 if __name__ == "__main__":
 
-  # Get information about the most recent version of Pfam:
+  # parse the command-line arguments
+  parser = argparse.ArgumentParser(description='Download all HMMs from the most recent version of Pfam.')
+  parser.add_argument('--path_to_pfam', type='str', help='Full path to a directory where Pfam HMMs should be stored.',
+                      default=os.getcwd() + '/pfam/')
+  args = parser.parse_args()
+
+  # get information about the most recent version of Pfam:
   version, date, entries = pfam_release_info()
+  pfam_version = version[:version.rfind('.')]
   sys.stderr.write('Pfam version ' + version + ', released ' + date + ', contains ' + entries + ' total HMMs.\n')
 
-  # Set up all directories here as needed:
-  DATAPATH = os.getcwd() + '/'
-  pfam_version = version[:version.rfind('.')]
-
-  for directory in ['pfam',
-                    'pfam/hmms-v'+pfam_version,
-                    'domains',
-                    'domains/hmmres-v'+pfam_version,
-                    'domains/processed-v'+pfam_version]:
-    call(['mkdir', DATAPATH+directory])
+  # create directories as needed:
+  for directory in [args.path_to_pfam,
+                    args.path_to_pfam + 'hmms-v'+pfam_version]:
+    if not os.path.isdir(directory):
+      call(['mkdir', directory])
 
   # Download the most recent version of Pfam, storing HMMs in the proper directory:
-  pfam_hmm_download(DATAPATH+'pfam/hmms-v'+pfam_version+'/', pfam_version)
+  pfam_hmm_download(args.path_to_pfam + 'hmms-v'+pfam_version, pfam_version)
