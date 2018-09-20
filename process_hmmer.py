@@ -358,8 +358,8 @@ if __name__ == "__main__":
     # (5b) run hmmsearch to subset the genes we want to actually find domain hits in
     #     NOTE: this is just an efficiency step, as this process is FAST but gives us less information
     arguments = ['hmmsearch',
-          '--domtblout '+args.results_path+'hmmres-v'+args.pfam_version+'/'+hmm+'.hmmres-orig',
           '-o /dev/null',
+          '--domtblout ' + args.results_path + 'hmmres-v' + args.pfam_version + '/' + hmm + '.hmmres-orig',
           '-T 0',
           '--domT 0',
           '--incT 0',
