@@ -363,5 +363,5 @@ if __name__ == "__main__":
                        args.pfam_path + ' --pfam_version ' + args.pfam_version + ' --fasta_infile ' +
                        args.fasta_infile + ' --results_path ' + args.results_path + ' \n')
 
-    create_domsbyprot(args.fasta_infile, args.pfam_path, args.pfam_version, concatenated_results_file,
-                      filtered_results_file)
+    create_domsbyprot(args.fasta_infile, args.pfam_path, args.pfam_version, args.results_path,
+                      concatenated_results_file, filtered_results_file)
