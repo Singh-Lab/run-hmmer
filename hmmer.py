@@ -407,7 +407,7 @@ if __name__ == "__main__":
 
   sys.stderr.write('Testing all functions in '+sys.argv[0]+'...\n')
 
-  PATH = '/home/snadimpa/datadb/'
+  data_path = '/home/snadimpa/datadb/'
 
   # To run the following set of HMMs: 
   hmms = ['PF00096_zf-C2H2', 'PF02892_zf-BED', 'PF06220_zf-U1', 'PF09237_GAGA',
@@ -415,13 +415,13 @@ if __name__ == "__main__":
           'PF12874_zf-met', 'PF12907_zf-met2', 'PF13909_zf-H2C2_5', 'PF13912_zf-C2H2_6',
           'PF13913_zf-C2HC_2']
 
-  hmms = [PATH+'pfam/'+hmm+'.hmm' for hmm in hmms]
+  hmms = [data_path + 'pfam/' + hmm + '.hmm' for hmm in hmms]
 
   # On the following PROTEIN input file:
-  seqfile = PATH + 'flybase/pep/dmel-all-translation-r6.04.fasta.gz'
+  seqfile = data_path + 'flybase/pep/dmel-all-translation-r6.04.fasta.gz'
 
   # And store the HMMER results in the following output file:
-  outfile = PATH+'hmmer/dmel-r6.04_c2h2zf_hmmerresults.tsv'
+  outfile = data_path + 'hmmer/dmel-r6.04_c2h2zf_hmmerresults.tsv'
 
   sys.stderr.write('Looking for matches using the following '+str(len(hmms))+' HMM files:\n')
   for hmm in hmms:
