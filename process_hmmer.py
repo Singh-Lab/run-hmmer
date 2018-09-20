@@ -205,7 +205,7 @@ def find_domain_matches(hmm_file, output_file, infile, ids=set()):
 
   output_handle = gzip.open(output_file, 'w') if output_file.endswith('gz') else open(output_file, 'w')
   output_handle.write('# All matching hits from the HMM found in ' + hmm_file + '\n')
-  output_handle.write('# on the protein sequences found in ' + PROTFILE + '\n')
+  output_handle.write('# on the protein sequences found in ' + infile + '\n')
   output_handle.write('\t'.join(['#TargetID', 'HMM_Name', 'E-value', 'BitScore', 'TargetStart', 'TargetEnd', 'HMM_Seq',
                                  'Target_Seq', 'HMM_Pos', 'Description'])+'\n')
 
@@ -357,7 +357,7 @@ if __name__ == "__main__":
 
     # (5b) run hmmsearch to subset the genes we want to actually find domain hits in
     #     NOTE: this is just an efficiency step, as this process is FAST but gives us less information
-    arguments = ['hmmsearch',
+    call(['hmmsearch',
           '-o /dev/null',
           '--domtblout ' + args.results_path + 'hmmres-v' + args.pfam_version + '/' + hmm + '.hmmres-orig',
           '-T 0',
@@ -365,9 +365,7 @@ if __name__ == "__main__":
           '--incT 0',
           '--incdomT 0',  # No cutoffs guarantees more thorough hits
           hmmfile,
-          args.fasta_infile]
-    print ' '.join(arguments)
-    call(arguments)
+          args.fasta_infile])
     
     # (5c) Set the subset of sequence IDs to look through (to speed up process of finding matches):
     whichseqs = set()
