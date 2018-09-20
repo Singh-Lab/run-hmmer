@@ -44,8 +44,8 @@ We run both HMMER 2.3.2 and HMMER 3.1b2 and therefore expect lots of duplicate d
 python create_domain_output.py --concatenate_hmmer_results 
                                --pfam_path pfam/
                                --pfam_version 31
-                               --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
-                               --results_path domains/
+                               --fasta_infile <full path to NON-COMPRESSED fasta-formatted sequence file>
+                               --results_path domains/processed-v31/
 ```
 
 We **must** run the previous function before calling the following, as the following depends on the intermediate results. We run this to restrict to domains that:
@@ -58,7 +58,7 @@ We **must** run the previous function before calling the following, as the follo
 python create_domain_output.py --filter_domains
                                --pfam_path pfam/
                                --pfam_version 31
-                               --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
+                               --fasta_infile <full path to NON-COMPRESSED fasta-formatted sequence file>
                                --results_path domains/
                                --outfile domains/domsbyprot.txt.gz
 ```
