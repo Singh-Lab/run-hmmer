@@ -4,7 +4,7 @@ Run both HMMER 2.3.2 and HMMER 3 on a set of Pfam HMMs, parse and combine result
 ## Downloading and installing HMMER
 HMMER 2.3.2 (released October 2003) and HMMER 3.1b2 (released February 2015) can both be downloaded from http://hmmer.org/download.html. I recommend installing HMMER 2.3.2 first (note that the scripts in this repository require the HMMER 2.3.2 binaries to be renamed with a "232" suffix):
 
-**NOTE:** Edit the bash script below (i.e., change where HMMER 2.3.2 files are copied, and run `./configure --prefix=/somewhere/else/than/usr/local` before `make` and `make install` for HMMER 3.1b) to install locally if you *do not* have sudo access wherever you are installing (e.g., your institution's cluster).
+**NOTE:** Edit the bash script below (i.e., change where HMMER 2.3.2 files are copied, and run `./configure --prefix=/somewhere/else/than/usr/local` before `make` and `make install` for HMMER 3.1b2) to install locally if you *do not* have sudo access wherever you are installing (e.g., your institution's cluster).
 
 ```bash
 sh install_hmmer.sh
