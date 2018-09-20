@@ -58,6 +58,8 @@ def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
   """
 
   # Create output directory if need be:
+  if not output_directory.endswith('/'):
+    output_directory = output_directory+'/'
   if not os.path.isdir(output_directory):
     call(['mkdir', output_directory])
 
@@ -122,4 +124,4 @@ if __name__ == "__main__":
       call(['mkdir', directory])
 
   # Download the most recent version of Pfam, storing HMMs in the proper directory:
-  pfam_hmm_download(args.pfam_path + 'hmms-v'+pfam_version, pfam_version)
+  pfam_hmm_download(args.pfam_path + 'hmms-v'+pfam_version+'/', pfam_version)
