@@ -12,14 +12,18 @@ sh install_hmmer.sh
 
 
 ## Downloading and formatting Pfam HMMs
-The most current set of Pfam-A HMMs can be found at: ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz. To download this file then parse it into individual files to use with HMMER 2.3.2 and HMMER 3.1b2 (as the scripts in this repository require), run the following. Note that the default **path_to_pfam** is "current_working_directory/pfam/".
+The most current set of Pfam-A HMMs can be found at: 
+ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz. To download this file then parse 
+it into individual files to use with HMMER 2.3.2 and HMMER 3.1b2 (as the scripts in this repository 
+require), run the following. Note that the default **pfam_path** is "respository_directory/pfam/".
 
 ```bash
 python download_pfam.py --pfam_path pfam/
 ```
 
 ## Running HMMER and parsing results
-The general format to run is as follows, where the ending value is 1 more than the actual ending 0-index. For instance, to run on HMMs 0, 1, and 2, we would call processhmmer.py with --start 0 and --end **3**.
+The general format to run is as follows, where the ending value is 1 more than the actual ending 0-index. 
+For instance, to run on HMMs 0, 1, and 2, we would call process_hmmer.py with --start 0 and --end **3**.
 
 ```bash
 python process_hmmer.py --pfam_path pfam/ 

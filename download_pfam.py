@@ -104,7 +104,7 @@ if __name__ == "__main__":
   script_path = os.path.dirname(os.path.abspath(__file__))+'/'
 
   parser = argparse.ArgumentParser(description='Download all HMMs from the most recent version of Pfam.')
-  parser.add_argument('--pfam_path', type='str', help='Full path to a directory where Pfam HMMs should be stored.',
+  parser.add_argument('--pfam_path', type=str, help='Full path to a directory where Pfam HMMs should be stored.',
                       default=script_path + 'pfam/')
   args = parser.parse_args()
 
@@ -116,7 +116,6 @@ if __name__ == "__main__":
   pfam_version = version[:version.rfind('.')]
   sys.stderr.write('Pfam version ' + version + ', released ' + date + ', contains ' + entries + ' total HMMs.\n')
 
-  # create directories as needed:
   for directory in [args.pfam_path,
                     args.pfam_path + 'hmms-v'+pfam_version]:
     if not os.path.isdir(directory):
