@@ -26,64 +26,64 @@ import os
 import sys
 import gzip
 from random import choice
-from string import ascii_letters
-from string import digits
+from string import ascii_letters, digits
+from subprocess import call
 
 
-######################################################################
-#                        PARSE PFAM HMM FILES                        #
-######################################################################
+####################################################################################################
+# Extract information from HMM and sequence files
+####################################################################################################
 
-def _gethmmname(hmmfile):
+def hmmname_from_hmmfile(hmm_file):
   """
-  :param hmmfile: full path to a Pfam HMM file
-  :return: the name of the HMM (used for parsing)
+  :param hmm_file: full path to a Pfam HMM file
+  :return: the name of the HMM parsed from the file
   """
 
-  if not os.path.isfile(hmmfile):
-    sys.stderr.write('Could not open ' + hmmfile + '\n')
+  if not os.path.isfile(hmm_file):
+    sys.stderr.write('Could not open ' + hmm_file + '\n')
     return
 
-  x = gzip.open(hmmfile) if hmmfile.endswith('gz') else open(hmmfile)
+  hmm_handle = gzip.open(hmm_file) if hmm_file.endswith('gz') else open(hmm_file)
 
-  for l in x:
-    if l.startswith('NAME'):
-      hmmname = l.strip().split()[1]
-      x.close()
-      return hmmname
+  hmm_name = 'N/A'
+  for hmm_line in hmm_handle:
+    if hmm_line.startswith('NAME'):
+      hmm_name = hmm_line.strip().split()[1]
+      break
   else:
-    x.close()
-    sys.stderr.write('Improperly formatted HMM file (' + hmmfile + '), could not find name.\n')
+    sys.stderr.write('Improperly formatted HMM file (' + hmm_file + '), could not find name.\n')
+
+  hmm_handle.close()
+  return hmm_name
 
 
-######################################################################
-#            PARSE SEQUENCE DESCRIPTORS FROM FASTA FILES             #
-######################################################################
+####################################################################################################
 
-def _getdescs(fastafile):
+def seqdesc_from_fasta(fasta_file):
   """
-  :param fastafile: full path to a fasta-formatted sequence file
+  :param fasta_file: full path to a fasta-formatted sequence file
   :return: a dictionary of sequence ID -> FASTA descriptions
   """
 
-  x = gzip.open(fastafile) if fastafile.endswith('gz') else open(fastafile)
+  fasta_handle = gzip.open(fasta_file) if fasta_file.endswith('gz') else open(fasta_file)
+  descriptions = {fasta_line[1:-1].split()[0]: ' '.join(fasta_line.strip().split()[1:])
+                  for fasta_line in fasta_handle if fasta_line.startswith('>')}
+  fasta_handle.close()
 
-  descriptions = {l[1:-1].split()[0]: ' '.join(l.strip().split()[1:]) for l in x if l.startswith('>')}
-
-  x.close()
   return descriptions
 
 
-######################################################################
-#               PARSE HMMER 2.3.2 and HMMER 3.0 OUTPUT               #
-######################################################################
+####################################################################################################
+# Parse HMMER 2.3.2 and HMMER 3.1b2 results
+####################################################################################################
 
-def parsehmmer232(filename, hmmname, descs):
+def parsehmmer232(unparsed_output, hmm_name, seqid_to_desc):
   """
-  :param filename: full path to unparsed output from HMMER 2.3.2
-  :param hmmname: Pfam HMM ID and name (e.g., PF00096_zf-C2H2)
-  :param descs: dictionary of sequence ID -> sequence description from the original FASTA file
-  :return: a tab-delineated table with all important information
+  :param unparsed_output: full path to unparsed output from HMMER 2.3.2
+  :param hmm_name: Pfam HMM ID and name (e.g., PF00096_zf-C2H2)
+  :param seqid_to_desc: dictionary of sequence ID -> sequence description from the original FASTA file
+  :return: a tab-delimited table with all domain hits and additional important information
   """
 
   tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in xrange(10)) + '.txt'
@@ -97,26 +97,27 @@ def parsehmmer232(filename, hmmname, descs):
   # Set blank variables of all fields that will be updated properly if files are properly formatted:
   prot_id, bitscore, evalue, alistart, aliend, alimatch, hmmmatch, hmmstart, hmmend = '', '', '', '', '', '', '', '', ''
 
-  hmmpos = {}
+  hmm_position = {}
 
-  for l in open(filename):
-    i = l.strip().split()
+  unparsed_handle = open(unparsed_output)
+  for output_line in unparsed_handle:
+    i = output_line.strip().split()
     if len(i) < 1:  # No pertinent information here
       continue
 
     # We really need the HMM start and end positions also, though...
-    if len(i) > 2 and i[0] in descs and i[1].count('/') == 1 and \
+    if len(i) > 2 and i[0] in seqid_to_desc and i[1].count('/') == 1 and \
        i[1].split('/')[0].isdigit() and i[1].split('/')[1].isdigit():
       a1 = max(len(i[0]), len('Sequence')) + 1
-      hmmpos[i[1]] = (l[a1 + 23:a1 + 28].strip(), l[a1 + 29:a1 + 34].strip())
+      hmm_position[i[1]] = (output_line[a1 + 23:a1 + 28].strip(), output_line[a1 + 29:a1 + 34].strip())
 
-      if not hmmpos[i[1]][0].isdigit() or not hmmpos[i[1]][1].isdigit():
-        sys.stderr.write('\n'.join([filename, l, hmmpos[i[1]][0], hmmpos[i[1]][1]])+'\n')
+      if not hmm_position[i[1]][0].isdigit() or not hmm_position[i[1]][1].isdigit():
+        sys.stderr.write('\n'.join([unparsed_output, output_line, hmm_position[i[1]][0], hmm_position[i[1]][1]]) + '\n')
         sys.exit(1)
 
     # If i[0] is an ID that we're interested in:
-    elif len(i) > 2 and i[0][:-1] in descs and i[0][-1] == ':' and i[1] == 'domain':
-      assert not reach, 'Could not correctly parse ' + filename
+    elif len(i) > 2 and i[0][:-1] in seqid_to_desc and i[0][-1] == ':' and i[1] == 'domain':
+      assert not reach, 'Could not correctly parse ' + unparsed_output
 
       reach = True  # We have reached a match
 
@@ -125,7 +126,7 @@ def parsehmmer232(filename, hmmname, descs):
       # 10 characters WHEN USED LATER IN THE ALIGNMENT MATCH (here, it is always complete)
 
       currkey = i[2] + '/' + i[4].replace(',', '')
-      hmmstart, hmmend = hmmpos[currkey] if currkey in hmmpos else ('', '')
+      hmmstart, hmmend = hmm_position[currkey] if currkey in hmm_position else ('', '')
 
       cid = i[0][:10]
       if cid.endswith(':') and len(cid) == len(i[0]):
@@ -154,54 +155,60 @@ def parsehmmer232(filename, hmmname, descs):
           alimatch += i[2]  # (multi-line)
 
         if aliend == i[3]:  # Reached the end
-          output_handle.write('\t'.join([prot_id, hmmname, evalue, bitscore, alistart, aliend, hmmmatch,
-                                         alimatch, (descs[prot_id] + ' ' if prot_id in descs else '') +
+          output_handle.write('\t'.join([prot_id, hmm_name, evalue, bitscore, alistart, aliend, hmmmatch,
+                                         alimatch, (seqid_to_desc[prot_id] + ' ' if prot_id in seqid_to_desc else '') +
                                          'HMMStart=' + str(hmmstart) + '; HMMEnd=' + str(hmmend) + ';']) + '\n')
           reach = False
           multihmm = False
 
-      elif multihmm and (len(i) == 1 or '+' not in l):  # Last line of a multi-line match?
+      elif multihmm and (len(i) == 1 or '+' not in output_line):  # Last line of a multi-line match?
         if '<' in i[0]:
           multihmm = False
           hmmmatch += i[0][:i[0].find('<')]
         elif i[0] != 'CS':  # This stands for 'consensus structure' line -- we ignore that
           hmmmatch += i[0]
+  unparsed_handle.close()
   output_handle.close()
 
   # Overwrite the original HMMER output:
-  final_output_handle = open(filename, 'w')
+  final_output_handle = open(unparsed_output, 'w')
   final_output_handle.write('\t'.join(['#Target', 'HMM', 'E-value', 'BitScore', 'TargetStart', 'TargetEnd',
                                        'HMM_Seq', 'Ali_Seq', 'Description']) + '\n')
-  with open(tmpfile) as x:
-    for l in sorted([l for l in x]):
-      final_output_handle.write(l)
+  with open(tmpfile) as tmp_handle:
+    for output_line in sorted([output_line for output_line in tmp_handle]):
+      final_output_handle.write(output_line)
   final_output_handle.close()
-  os.system('rm ' + tmpfile)
+  call(['rm', tmpfile])
 
 
-######################################################################
+####################################################################################################
 
-def parsehmmer3(filename, hmmname, descs):
-  """Parses output from a HMMER 3 output file into a readable table format
-  with all necessary information."""
+def parsehmmer3(unparsed_output, hmm_name, seqid_to_desc):
+  """
+  :param unparsed_output: full path to unparsed output from HMMER 3.1b2
+  :param hmm_name: Pfam HMM ID and name (e.g., PF00096_zf-C2H2)
+  :param seqid_to_desc: dictionary of sequence ID -> sequence description from the original FASTA file
+  :return: a tab-delimited table with all domain hits and additional important information
+  """
 
   tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in xrange(10)) + '.txt'
   output_handle = open(tmpfile, 'w')
 
   reach = False  # Have we reached a match yet?
-  hmmstart, alistart, hmmmatch, alimatch, prot_id, bitscore, evalue = '', '', '', '', '', '', ''
+  hmmstart, hmmend, alistart, hmmmatch, alimatch, aliend, prot_id, bitscore, evalue = '', '', '', '', '', '', '', '', ''
 
-  for l in open(filename):
-    i = l.strip().split()
+  unparsed_handle = open(unparsed_output)
+  for output_line in unparsed_handle:
+    i = output_line.strip().split()
     if len(i) < 1:  # No pertinent information here
       continue
 
     if i[0] == '==':
       # We've reached one domain already, so print it out.
       if reach:
-        output_handle.write('\t'.join([prot_id, hmmname, evalue, bitscore, alistart, aliend, hmmmatch, alimatch,
-                                       (descs[prot_id] + ' ' if prot_id in descs else '') + 'HMMStart=' +
-                                       str(hmmstart) + '; HMMEnd=' + str(hmmend) + ';']) + '\n')
+        output_handle.write('\t'.join([prot_id, hmm_name, evalue, bitscore, alistart, aliend, hmmmatch, alimatch,
+                                       (seqid_to_desc[prot_id] + ' ' if prot_id in seqid_to_desc else '') +
+                                       'HMMStart=' + str(hmmstart) + '; HMMEnd=' + str(hmmend) + ';']) + '\n')
         hmmstart, alistart, hmmmatch, alimatch, prot_id = '', '', '', '', ''
 
       reach = True
@@ -211,14 +218,14 @@ def parsehmmer3(filename, hmmname, descs):
       evalue = i[8]
 
     elif reach:  # Otherwise, parse out information to augment domain
-      if i[0].startswith('>>') or (i[0].startswith('Internal') and not i[0].startswith(hmmname)):
-        output_handle.write('\t'.join([prot_id, hmmname, evalue, bitscore, alistart, aliend, hmmmatch, alimatch,
-                                       (descs[prot_id] + ' ' if prot_id in descs else '') + 'HMMStart=' +
-                                       str(hmmstart) + '; HMMEnd=' + str(hmmend) + ';']) + '\n')
+      if i[0].startswith('>>') or (i[0].startswith('Internal') and not i[0].startswith(hmm_name)):
+        output_handle.write('\t'.join([prot_id, hmm_name, evalue, bitscore, alistart, aliend, hmmmatch, alimatch,
+                                       (seqid_to_desc[prot_id] + ' ' if prot_id in seqid_to_desc else '') +
+                                       'HMMStart=' + str(hmmstart) + '; HMMEnd=' + str(hmmend) + ';']) + '\n')
         reach = False
         hmmstart, alistart, hmmmatch, alimatch, prot_id = '', '', '', '', ''
 
-      elif i[0].startswith(hmmname) and len(i[0]) <= len(hmmname):
+      elif i[0].startswith(hmm_name) and len(i[0]) <= len(hmm_name):
         # Example line:
         # fn3 2 saPenlsvsevtstsltlsWsppkdgggpitgYeveyqekgegeewqevtvprtttsvtltgLepgteYefrVqavngagegp 84
         if hmmstart == '':
@@ -228,7 +235,7 @@ def parsehmmer3(filename, hmmname, descs):
           hmmmatch += i[2]
         hmmend = i[3]  # this will be reset with multi-line HMMs
 
-      elif i[0] in descs:
+      elif i[0] in seqid_to_desc:
         # Example line:
         # 7LESS_DROME 439 SAPVIEHLMGLDDSHLAVHWHPGRFTNGPIEGYRLRLSSSEGNA-TSEQLVPAGRGSYIFSQLQAGTNYTLALSMINKQGEGP 520
         if prot_id == '':
@@ -238,120 +245,141 @@ def parsehmmer3(filename, hmmname, descs):
         else:
           alimatch += i[2]
         aliend = i[3]  # this will ALSO be reset with multi-line alignment matches
+  unparsed_handle.close()
   output_handle.close()
 
   # Overwrite the original HMMER output:
-  final_output_handle = open(filename, 'w')
+  final_output_handle = open(unparsed_output, 'w')
   final_output_handle.write('\t'.join(['#Target', 'HMM', 'E-value', 'BitScore', 'TargetStart', 'TargetEnd',
                                        'HMM_Seq', 'Ali_Seq', 'Description']) + '\n')
-  with open(tmpfile) as x:
-    for l in sorted([l for l in x]):
-      final_output_handle.write(l)
+  with open(tmpfile) as tmp_handle:
+    for output_line in sorted([output_line for output_line in tmp_handle]):
+      final_output_handle.write(output_line)
   final_output_handle.close()
-  os.system('rm ' + tmpfile)
+  call(['rm', tmpfile])
 
 
-######################################################################
-#                   RUN HMMER 2.3.2 and HMMER 3.0                    #
-######################################################################
+####################################################################################################
+# Run HMMER 2.3.2 and HMMER 3.1b2
+####################################################################################################
 
-def runhmmer232(hmmfile, protfile, outputfile, hmmname='', descs=None):
-  """Runs HMMER 2.3.2 and parses results, storing them into the outputfile."""
+def runhmmer232(hmm_file, input_prot_file, results_out, hmm_name='', seqid_to_desc=None):
+  """
+  :param hmm_file: full path to a Pfam-formatted HMM
+  :param input_prot_file: full path to an *unzipped* FASTA-formatted sequence file
+  :param results_out: full path to where parsed, formatted output should be stored
+  :param hmm_name: Pfam HMM ID and name (e.g., PF00096_zf-C2H2)
+  :param seqid_to_desc: dictionary of sequence ID -> sequence description from the original FASTA file
+  :return: none, but run HMMER 2.3.2, parse the results, and store those results in results_out
+  """
 
   # Check if all files exist:
-  for infile in [hmmfile, protfile]:
+  for infile in [hmm_file, input_prot_file]:
     if not os.path.isfile(infile): 
       sys.stderr.write('Could not open file '+infile+'.\n')
       return
-  if not os.path.isdir('/'.join(outputfile.split('/')[:-1])):
+  if not os.path.isdir('/'.join(results_out.split('/')[:-1])):
     sys.stderr.write('Could not create outputfile in ' +
-                     '/'.join(outputfile.split('/')[:-1]) + ', no such directory.\n')
+                     '/'.join(results_out.split('/')[:-1]) + ', no such directory.\n')
     return
 
   # Extract hmmname and descriptions if not provided:
-  if hmmname == '':
-    hmmname = _gethmmname(hmmfile)
-  if not descs:
-    descs = _getdescs(protfile)
+  if hmm_name == '':
+    hmm_name = hmmname_from_hmmfile(hmm_file)
+  if not seqid_to_desc:
+    seqid_to_desc = seqdesc_from_fasta(input_prot_file)
 
-  with open(hmmfile) as x:
+  with open(hmm_file) as x:
     firstline = x.next()
 
   if not firstline.startswith('HMMER2.0'):
     tmpfile = '/tmp/' + ''.join(choice(ascii_letters+digits) for _ in xrange(10)) + '.txt'
-    os.system('hmmconvert -2 '+hmmfile+' > '+tmpfile)
-    os.system('chmod 755 '+tmpfile)
-    hmmfile = tmpfile
+    call('hmmconvert -2 ' + hmm_file + ' > ' + tmpfile, shell=True)
+    call('chmod 755 '+tmpfile, shell=True)
+    hmm_file = tmpfile
 
-  os.system("hmmsearch232 -Z 10 --domT 0 " + hmmfile + " " + protfile + " > " + outputfile)
+  call("hmmsearch232 -Z 10 --domT 0 " + hmm_file + " " + input_prot_file + " > " + results_out, shell=True)
 
   if not firstline.startswith('HMMER2.0'):
-    os.system('rm '+hmmfile)
+    call(['rm', hmm_file])
 
-  parsehmmer232(outputfile, hmmname, descs)
+  parsehmmer232(results_out, hmm_name, seqid_to_desc)
 
 
-######################################################################
+####################################################################################################
 
-def runhmmer3(hmmfile, protfile, outputfile, hmmname='', descs=None):
-  """Runs HMMER 3 and parses results, storing them into the outputfile."""
+def runhmmer3(hmm_file, input_prot_file, results_out, hmm_name='', seqid_to_desc=None):
+  """
+  :param hmm_file: full path to a Pfam-formatted HMM
+  :param input_prot_file: full path to an *unzipped* FASTA-formatted sequence file
+  :param results_out: full path to where parsed, formatted output should be stored
+  :param hmm_name: Pfam HMM ID and name (e.g., PF00096_zf-C2H2)
+  :param seqid_to_desc: dictionary of sequence ID -> sequence description from the original FASTA file
+  :return: none, but run HMMER 3.1b2, parse the results, and store those results in results_out
+  """
 
   # Check if all files exist:
-  for infile in [hmmfile, protfile]:
+  for infile in [hmm_file, input_prot_file]:
     if not os.path.isfile(infile):
       sys.stderr.write('Could not open file '+infile+'.\n')
       return
-  if not os.path.isdir('/'.join(outputfile.split('/')[:-1])):
+  if not os.path.isdir('/'.join(results_out.split('/')[:-1])):
     sys.stderr.write('Could not create output file in ' +
-                     '/'.join(outputfile.split('/')[:-1]) + ', no such directory.\n')
+                     '/'.join(results_out.split('/')[:-1]) + ', no such directory.\n')
     return
 
   # Extract hmmname and descriptions if not provided:
-  if hmmname == '':
-    hmmname = _gethmmname(hmmfile)
-  if not descs:
-    descs = _getdescs(protfile)
+  if hmm_name == '':
+    hmm_name = hmmname_from_hmmfile(hmm_file)
+  if not seqid_to_desc:
+    seqid_to_desc = seqdesc_from_fasta(input_prot_file)
 
-  os.system("hmmsearch -Z 10 --notextw --domT 0 " + hmmfile + " " + protfile + " > " + outputfile)
-  parsehmmer3(outputfile, hmmname, descs)
+  call("hmmsearch -Z 10 --notextw --domT 0 " + hmm_file + " " + input_prot_file + " > " + results_out, shell=True)
+  parsehmmer3(results_out, hmm_name, seqid_to_desc)
 
 
-######################################################################
-# WRAPPER FUNCTION TO RUN AND PARSE RESULTS FROM BOTH HMMER VERSIONS #
-######################################################################
+####################################################################################################
+# Primary parser functionality
+####################################################################################################
 
-def finddom(hmmlist, sequence_file, resultsfile):
+def find_domains(hmms_to_run, input_prot_file, results_out):
+  """
+  :param hmms_to_run: set of HMMs to run HMMER 2.3.2 and 3.1b2 on
+  :param input_prot_file: full path to an *unzipped* FASTA-formatted sequence file (to run HMMER on)
+  :param results_out: full path to an output file to store all unique output from HMMER
+  :return: None, but write to results_out
+  """
   """Runs HMMER 2.3.2 and HMMER 3 using the HMMs listed in hmmlist on the
   filenames found in the inputdir, and writes output files to the outputdir
   with the name origname + suffix + '.hmmres'."""
 
   # Check the type of the hmmlist!
-  if type(hmmlist) not in [list, set, tuple]:
-   hmmlist = [hmmlist]
+  if type(hmms_to_run) not in [list, set, tuple]:
+   hmms_to_run = [hmms_to_run]
   
   # Check to make sure files exist:
-  if not os.path.isfile(sequence_file):
-    sys.stderr.write('In finddom: Could not find input file ' + sequence_file + '\n')
+  if not os.path.isfile(input_prot_file):
+    sys.stderr.write('In find_domains: Could not find input file ' + input_prot_file + '\n')
     return
-  if not os.path.isdir(resultsfile[:resultsfile.rfind('/')]):
-    sys.stderr.write('In finddom: Could not find output directory '+resultsfile[:resultsfile.rfind('/')]+'\n')
+  if not os.path.isdir(results_out[:results_out.rfind('/')]):
+    sys.stderr.write('In find_domains: Could not find output directory ' + results_out[:results_out.rfind('/')] + '\n')
     return
-  for current_hmm in hmmlist:
+  for current_hmm in hmms_to_run:
     if not os.path.isfile(current_hmm):
-      sys.stderr.write('In finddom: Could not find HMM file '+current_hmm+'\n')
+      sys.stderr.write('In find_domains: Could not find HMM file '+current_hmm+'\n')
       return
 
   # Get protein descriptions
-  descs = _getdescs(sequence_file)
+  descs = seqdesc_from_fasta(input_prot_file)
 
   # Run both HMMER 2.3.2 and HMMER 3, parse the output, and store it all
   tmpfiles = []
-  for hmmfile in hmmlist:
-    hmmname = _gethmmname(hmmfile)
+  for hmmfile in hmms_to_run:
+    hmmname = hmmname_from_hmmfile(hmmfile)
         
     for hmmfunc in [runhmmer232, runhmmer3]:
       tmpfiles.append('/tmp/'+''.join(choice(ascii_letters+digits) for _ in xrange(10))+'.tmp')
-      hmmfunc(hmmfile, sequence_file, tmpfiles[-1], hmmname, descs)
+      hmmfunc(hmmfile, input_prot_file, tmpfiles[-1], hmmname, descs)
 
   # Keep ALL UNIQUE output, sort it, and print it into outfile
   lines = set()
@@ -361,19 +389,19 @@ def finddom(hmmlist, sequence_file, resultsfile):
         continue
       if l.strip() != '':
         lines.add(l)
-    os.system('rm '+f)
+    call(['rm', f])
 
-  output_handle = open(resultsfile, 'w')
+  output_handle = open(results_out, 'w')
   map(output_handle.write, sorted(list(lines)))
   output_handle.close()
 
 
-######################################################################
-#                                MAIN                                #
-# Note that this exists purely for *testing and debugging* purposes. #
-# Functions should be imported from this file to use separately.     #
-# I offer no guarantees on this testing code!                        #
-######################################################################
+####################################################################################################
+# MAIN
+# Note that this exists purely for *testing and debugging* purposes.
+# Functions should be imported from this file to use separately.
+# I offer no guarantees on this testing code!
+####################################################################################################
 
 if __name__ == "__main__":
 
@@ -401,7 +429,7 @@ if __name__ == "__main__":
   sys.stderr.write('Searching sequences in '+seqfile+' for matches, writing output to '+outfile+'\n')
 
   # We simply run: 
-  finddom(hmms, seqfile, outfile)
+  find_domains(hmms, seqfile, outfile)
 
   # If we wanted to choose a particular HMM and run only HMMER 2.3.2 or HMMER 3.0:
 

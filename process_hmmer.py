@@ -16,7 +16,7 @@ from subprocess import call
 from string import ascii_letters, digits
 from random import choice
 from Bio import pairwise2
-from hmmer import finddom
+from hmmer import find_domains
 
 
 ####################################################################################################
@@ -248,7 +248,7 @@ def find_domain_matches(hmm_file, output_file, infile, error_logfile, ids=()):
       sequence_handle.close()
 
       # Now, RUN hmmsearch for EACH hmmID in our list.
-      finddom([hmm_file], tmpfiles[0], tmpfiles[1])
+      find_domains([hmm_file], tmpfiles[0], tmpfiles[1])
 
       os.system('rm ' + tmpfiles[0])
 

@@ -30,8 +30,8 @@ HMMINFO = {'27': {'date': 'March 2013', 'entries': '14,831'},
 
 def create_allhmmresbyprot(fasta_infile,
                            pfam_version='31',
-                           results_directory=os.getcwd()+'/domains/processed-v31/',
-                           outfile=os.getcwd()+'/domains/allhmmresbyprot-v31.tsv.gz'):
+                           results_directory=os.path.dirname(os.path.abspath(__file__)) + '/domains/processed-v31/',
+                           outfile=os.path.dirname(os.path.abspath(__file__)) + '/domains/allhmmresbyprot-v31.tsv.gz'):
   """
   :param fasta_infile: full path to an input FASTA file that HMMER was run on (for header information)
   :param pfam_version: Which Pfam version to use? 31 is our standard
@@ -41,12 +41,12 @@ def create_allhmmresbyprot(fasta_infile,
            between the two versions of HMMER
   """
   output_handle = gzip.open(outfile, 'w') if outfile.endswith('gz') else open(outfile, 'w')
-  output_handle.write('# HMMER 2.3.2 and HMMER 3.1b2 results on all protein sequences found in '+fasta_infile+'\n')
+  output_handle.write('# HMMER 2.3.2 and HMMER 3.1b2 results on all protein sequences found in ' + fasta_infile + '\n')
   output_handle.write('# Pfam version ' + pfam_version + '.0, released ' + HMMINFO[pfam_version]['date'] +
                       ', containing ' + HMMINFO[pfam_version]['entries'] + ' entries\n')
 
   output_handle.write('\t'.join(['#TargetID', 'HMM_Name', 'E-value', 'BitScore', 'TargetStart', 'TargetEnd', 'HMM_Seq',
-                                 'Target_Seq', 'HMM_Pos', 'Description'])+'\n')
+                                 'Target_Seq', 'HMM_Pos', 'Description']) + '\n')
 
   total_domain_hits = 0  # total number of domains processed
 
@@ -73,18 +73,19 @@ def create_allhmmresbyprot(fasta_infile,
     # Write out all sorted results:
     for ((targ_id, tstart, tend, hmm_id, desc), (bitscore, evalue, hmmseq, tseq, hmmpos)) in sorted(results.items()):
       output_handle.write('\t'.join([targ_id, hmm_id, evalue, str(bitscore), str(tstart), str(tend),
-                                     hmmseq, tseq, hmmpos, desc])+'\n')
+                                     hmmseq, tseq, hmmpos, desc]) + '\n')
 
     total_domain_hits += len(results.keys())  # keep track of grand total across all domain types
   output_handle.close()
 
   sys.stderr.write('Concatenated all files from ' + results_directory + ' to ' + outfile + '\n')
-  sys.stderr.write(str(total_domain_hits)+' total domains!\n')
+  sys.stderr.write(str(total_domain_hits) + ' total domains!\n')
 
 
 ####################################################################################################
 
-def find_domains_from_file(concatenated_file=os.getcwd() + '/domains/processed-v31/allhmmresbyprot-v31.tsv.gz'):
+def find_domains_from_file(concatenated_file=os.path.dirname(os.path.abspath(__file__)) +
+                                             '/domains/processed-v31/allhmmresbyprot-v31.tsv.gz'):
   """
   :param concatenated_file: full path to a formatted HMMER result file
   :return: set of all domains found in that HMMER result file
@@ -123,8 +124,8 @@ def get_high_information_content(hmmfile):
         continue
       elif reach_hmm and len(hmm_line.strip().split()) > len(aas):
         matchstate = hmm_line.strip().split()[0]
-        probabilities = map(lambda var: math.exp(-1*float(var)), hmm_line.strip().split()[1:len(aas)+1])
-        if math.log(20, 2) + sum(j*math.log(j, 2) for j in probabilities) >= 4:  # required amino acid!
+        probabilities = map(lambda var: math.exp(-1 * float(var)), hmm_line.strip().split()[1:len(aas) + 1])
+        if math.log(20, 2) + sum(j * math.log(j, 2) for j in probabilities) >= 4:  # required amino acid!
           requiredstates[matchstate] = sorted(zip(probabilities, aas), reverse=True)[0][1]
   return requiredstates
 
@@ -161,15 +162,17 @@ def return_passing_hits(current_hits, gathering_thresholds):
 ####################################################################################################
 
 def create_domsbyprot(fasta_infile,
-                      path_to_pfam=os.getcwd()+'/pfam/hmms-v31/',
+                      path_to_pfam=os.path.dirname(os.path.abspath(__file__)) + '/pfam/hmms-v31/',
                       pfam_version='31',
-                      results_directory=os.getcwd() + '/domains/processed-v31/',
-                      concatenated_file=os.getcwd() + '/domains/allhmmresbyprot-v31.tsv.gz',
-                      filtered_outfile=os.getcwd() + '/domains/domsbyprot-v31.txt.gz'):
+                      results_directory=os.path.dirname(os.path.abspath(__file__)) + '/domains/processed-v31/',
+                      concatenated_file=os.path.dirname(os.path.abspath(__file__)) +
+                                        '/domains/allhmmresbyprot-v31.tsv.gz',
+                      filtered_outfile=os.path.dirname(os.path.abspath(__file__)) + '/domains/domsbyprot-v31.txt.gz'):
   """
   :param fasta_infile: full path to the FASTA file that HMMER was run on (for header information)
   :param path_to_pfam: full path to a directory containing all Pfam HMMs (required for filtering results)
   :param pfam_version: version of the Pfam database we are using (default is 31)
+  :param results_directory: full path to directory where tab-delimited HMMER results are stored
   :param concatenated_file: full path to a file generated by create_allhmmresbyprot()
   :param filtered_outfile: map the HMM match states to the sequence indices and residues at those indices
                   across all proteins for which we have results; note that these results are
@@ -281,7 +284,7 @@ def create_domsbyprot(fasta_infile,
   output_handle.write('# All COMPLETE Pfam domains (version ' + pfam_version + '.0, ' +
                       HMMINFO[pfam_version]['date'] + ', ' + HMMINFO[pfam_version]['entries'] + ' entries) that ' +
                       'passed the gathering threshold found in all amino acid sequences from\n')
-  output_handle.write('# '+fasta_infile+'\n')
+  output_handle.write('# ' + fasta_infile + '\n')
   output_handle.write('# Original, unfiltered by-domain HMMER results found in ' + results_directory + '\n')
   output_handle.write('\t'.join(['#Protein_Sequence_ID', 'Pfam_HMM_ID', 'matchstate:AA-0-index:AA-value']) + '\n')
 
@@ -294,7 +297,7 @@ def create_domsbyprot(fasta_infile,
 
   output_handle.close()
   sys.stderr.write('Condensed ' + concatenated_file + ' into ' + filtered_outfile + '\n')
-  sys.stderr.write(str(final_domain_count)+' total (1) complete, (2) non-deprecated domains that ' +
+  sys.stderr.write(str(final_domain_count) + ' total (1) complete, (2) non-deprecated domains that ' +
                    '(3) passed the gathering threshold!\n')
 
 
@@ -307,15 +310,15 @@ if __name__ == "__main__":
 
   parser = argparse.ArgumentParser(description='Concatenate and filter all processed HMMER domain hit results.')
 
-  parser.add_argument('--pfam_path', type=str, default=script_path+'pfam/',
+  parser.add_argument('--pfam_path', type=str, default=script_path + 'pfam/',
                       help='Full path to a directory where Pfam HMMs should be stored')
-  parser.add_argument('--pfam_version', type=str, default='31', choices=[str(i) for i in range(28, 32)],
+  parser.add_argument('--pfam_version', type=str, default='31', choices=[str(n) for n in range(28, 32)],
                       help='Pfam version we are running on.')
   parser.add_argument('--fasta_infile', type=str, help='Full path to fasta-formatted sequence file to run HMMER on.',
-                      default=script_path+'human_test_sequences.fa')
-  parser.add_argument('--results_path', type=str, default=script_path+'domains/',
+                      default=script_path + 'human_test_sequences.fa')
+  parser.add_argument('--results_path', type=str, default=script_path + 'domains/',
                       help='Full path to a directory where domain search results will be stored')
-  parser.add_argument('--outfile', type=str, default=script_path+'domains/domsbyprot-v31.tsv.gz')
+  parser.add_argument('--outfile', type=str, default=script_path + 'domains/domsbyprot-v31.tsv.gz')
   parser.add_argument('--concatenate_hmmer_results', dest='concatenate_hmmer_results', action='store_true',
                       default=False,
                       help='Concatenate individual HMMER results file into one, nonredundant results file.')
@@ -326,28 +329,28 @@ if __name__ == "__main__":
 
   # edit path names
   if not args.pfam_path.endswith('/'):
-    args.pfam_path = args.pfam_path+'/'
+    args.pfam_path = args.pfam_path + '/'
   if not args.results_path.endswith('/'):
-    args.results_path = args.results_path+'/'
+    args.results_path = args.results_path + '/'
 
   # automatically set output file names:
-  concatenated_results_file = args.results_path+'allhmmresbyprot-v' + args.pfam_version + '.tsv.gz'
+  concatenated_results_file = args.results_path + 'allhmmresbyprot-v' + args.pfam_version + '.tsv.gz'
   filtered_results_file = args.outfile
 
   if not args.concatenate_hmmer_results and not args.filter_domains:
     sys.stderr.write('No function specified, please run:\n' +
-                     'python create_domain_output.py --concatenate_hmmer_results --filter_domains --path_to_pfam '+
-                     args.pfam_path + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
-                     args.fasta_infile + ' --path_to_results ' + args.results_path + ' \n')
+                     'python create_domain_output.py --concatenate_hmmer_results --filter_domains --pfam_path ' +
+                     args.pfam_path + ' --pfam_version ' + args.pfam_version + ' --fasta_infile ' +
+                     args.fasta_infile + ' --results_path ' + args.results_path + ' \n')
     sys.exit(1)
 
   if args.concatenate_hmmer_results:
     # Concatenate all results from multiple files, removing duplicates as well as we can
     create_allhmmresbyprot(args.fasta_infile, args.pfam_version, args.results_path, concatenated_results_file)
-    sys.stderr.write('For final, filtered output, remember to run:\n' + 
-                     'python create_domain_output.py --filter_domains --path_to_pfam '+
-                     args.pfam_path + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
-                     args.fasta_infile + ' --path_to_results ' + args.results_path + ' \n')
+    sys.stderr.write('For final, filtered output, remember to run:\n' +
+                     'python create_domain_output.py --filter_domains --pfam_path ' +
+                     args.pfam_path + ' --pfam_version ' + args.pfam_version + ' --fasta_infile ' +
+                     args.fasta_infile + ' --results_path ' + args.results_path + ' \n')
 
   if args.filter_domains:
     # Restrict to domains that:
@@ -355,10 +358,10 @@ if __name__ == "__main__":
     # (2) passed the gathering threshold (taking into account both domain- and sequence-based cutoffs)
     # (3) have the appropriate residue at high information content positions (to remove "deprecated" domains)
     if not os.path.isfile(concatenated_results_file):
-      sys.stderr.write('No such file: '+concatenated_results_file+'! Please run:\n' +
-                       'python create_domain_output.py --concatenate_hmmer_results --path_to_pfam '+
-                     args.pfam_path + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
-                     args.fasta_infile + ' --path_to_results ' + args.results_path + ' \n')
-           
-    create_domsbyprot(args.fasta_infile, args.path_to_pfam, args.pfam_version, concatenated_results_file,
+      sys.stderr.write('No such file: ' + concatenated_results_file + '! Please run:\n' +
+                       'python create_domain_output.py --concatenate_hmmer_results --pfam_path ' +
+                       args.pfam_path + ' --pfam_version ' + args.pfam_version + ' --fasta_infile ' +
+                       args.fasta_infile + ' --results_path ' + args.results_path + ' \n')
+
+    create_domsbyprot(args.fasta_infile, args.pfam_path, args.pfam_version, concatenated_results_file,
                       filtered_results_file)
