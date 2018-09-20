@@ -311,7 +311,7 @@ if __name__ == "__main__":
                     # final, processed output will go here, for each domain (e.g., PF00096_zf-C2H2-v31.hmmres.gz):
                     args.results_path+'processed-v'+args.pfam_version]:
     if not os.path.isdir(directory):
-      call(['mkdir', directory], shell=True)
+      call('mkdir '+directory, shell=True)
 
   # (2) find all possible hmms to run on:
   #     NOTE: we assume files are named as PfamID_PfamName.hmm (e.g., PF00096_zf-C2H2.hmm)
@@ -334,7 +334,7 @@ if __name__ == "__main__":
     sys.stderr.write('Could not open specified infile: '+args.fasta_infile+'\n')
     sys.exit(1)
   if args.fasta_infile.endswith('.gz'):
-    call(['gzip', '-d', args.fasta_infile], shell=True)
+    call('gzip -d '+args.fasta_infile, shell=True)
 
   allseqs = set()
   fasta_handle = gzip.open(args.fasta_infile) if args.fasta_infile.endswith('gz') else open(args.fasta_infile)
@@ -357,7 +357,7 @@ if __name__ == "__main__":
 
     # (5b) run hmmsearch to subset the genes we want to actually find domain hits in
     #     NOTE: this is just an efficiency step, as this process is FAST but gives us less information
-    call(['hmmsearch',
+    call(' '.join(['hmmsearch',
           '-o /dev/null',
           '--domtblout ' + args.results_path + 'hmmres-v' + args.pfam_version + '/' + hmm + '.hmmres-orig',
           '-T 0',
@@ -365,7 +365,7 @@ if __name__ == "__main__":
           '--incT 0',
           '--incdomT 0',  # No cutoffs guarantees more thorough hits
           hmmfile,
-          args.fasta_infile], shell=True)
+          args.fasta_infile]), shell=True)
 
     # (5c) Set the subset of sequence IDs to look through (to speed up process of finding matches):
     whichseqs = set()
