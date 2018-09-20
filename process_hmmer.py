@@ -357,7 +357,7 @@ if __name__ == "__main__":
 
     # (5b) run hmmsearch to subset the genes we want to actually find domain hits in
     #     NOTE: this is just an efficiency step, as this process is FAST but gives us less information
-    call([' '.join(['/home/sk758/bin/hmmsearch',
+    call(['hmmsearch',
           '-o /dev/null',
           '--domtblout ' + args.results_path + 'hmmres-v' + args.pfam_version + '/' + hmm + '.hmmres-orig',
           '-T 0',
@@ -365,7 +365,7 @@ if __name__ == "__main__":
           '--incT 0',
           '--incdomT 0',  # No cutoffs guarantees more thorough hits
           hmmfile,
-          args.fasta_infile])])
+          args.fasta_infile])
     
     # (5c) Set the subset of sequence IDs to look through (to speed up process of finding matches):
     whichseqs = set()
