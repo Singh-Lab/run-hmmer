@@ -324,7 +324,7 @@ if __name__ == "__main__":
   logfile = args.results_path+'processed-v'+args.pfam_version+'/problems.log'
   if args.start != 0 or args.end < total_hmms_available:
     logfile = logfile.replace('.log', '-'+str(args.start)+'-'+str(args.end)+'.log')
-    hmms = hmms[args.start:max(args.end, total_hmms_available)]  # Subset to a range of HMMs if it was specified
+    hmms = hmms[args.start:min(args.end, total_hmms_available)]  # Subset to a range of HMMs if it was specified
   fasta_handle = gzip.open(logfile, 'w') if logfile.endswith('gz') else open(logfile, 'w')
   fasta_handle.close()  # clear the logfile to keep track of only the most recent results:
 
