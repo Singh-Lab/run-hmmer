@@ -15,17 +15,17 @@ sh install_hmmer.sh
 The most current set of Pfam-A HMMs can be found at: ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz. To download this file then parse it into individual files to use with HMMER 2.3.2 and HMMER 3.1b2 (as the scripts in this repository require), run the following. Note that the default **path_to_pfam** is "current_working_directory/pfam/".
 
 ```bash
-python download_pfam.py --path_to_pfam pfam/
+python download_pfam.py --pfam_path pfam/
 ```
 
 ## Running HMMER and parsing results
 The general format to run is as follows, where the ending value is 1 more than the actual ending 0-index. For instance, to run on HMMs 0, 1, and 2, we would call processhmmer.py with --start 0 and --end **3**.
 
 ```bash
-python process_hmmer.py --path_to_pfam pfam/ 
+python process_hmmer.py --pfam_path pfam/ 
                         --pfam_version 31 
                         --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file> 
-                        --path_to_results domains/ 
+                        --results_path domains/ 
                         --start 0 
                         --end 10
 ```
@@ -38,10 +38,10 @@ We run both HMMER 2.3.2 and HMMER 3.1b2 and therefore expect lots of duplicate d
 
 ```bash
 python create_domain_output.py --concatenate_hmmer_results 
-                               --path_to_pfam pfam/
+                               --pfam_path pfam/
                                --pfam_version 31
                                --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
-                               --path_to_results domains/
+                               --results_path domains/
 ```
 
 We **must** run the previous function before calling the following, as the following depends on the intermediate results. We run this to restrict to domains that:
@@ -52,10 +52,11 @@ We **must** run the previous function before calling the following, as the follo
 
 ```bash
 python create_domain_output.py --filter_domains
-                               --path_to_pfam pfam/
+                               --pfam_path pfam/
                                --pfam_version 31
                                --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file>
-                               --path_to_results domains/
+                               --results_path domains/
+                               --outfile domains/domsbyprot.txt.gz
 ```
 
 This produces a single, beautiful file (called domsbyprot.txt.gz) with all the domains from your original FASTA file.

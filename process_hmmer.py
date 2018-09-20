@@ -281,39 +281,47 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Run, parse, and process results from HMMER 3.0 and HMMER 2.3.2.')
 
   # to parallelize, we can specify a *subset* of these domains to run HMMER on.
+  script_path = os.path.dirname(os.path.abspath(__file__))+'/'
+
   parser.add_argument('--start', type=int, default=0,
                       help='Starting 0-index of subset of domains to run on.')
   parser.add_argument('--end', type=int,
                       help='Ending 0-index of subset of domains to run on.')
 
-  parser.add_argument('--path_to_pfam', type=str, default=os.getcwd()+'/pfam/',
+  parser.add_argument('--pfam_path', type=str, default=script_path+'pfam/',
                       help='Full path to a directory where Pfam HMMs should be stored')
   parser.add_argument('--pfam_version', type=str, default='31', choices=[str(i) for i in range(28, 32)],
                       help='Pfam version we are running on.')
   parser.add_argument('--fasta_infile', type=str, help='Full path to fasta-formatted sequence file to run HMMER on.')
-  parser.add_argument('--path_to_results', type=str, default=os.getcwd()+'/domains/',
+  parser.add_argument('--results_path', type=str, default=script_path+'domains/',
                       help='Full path to a directory where domain search results will be stored')
 
   args = parser.parse_args()
 
+  # edit path names
+  if not args.pfam_path.endswith('/'):
+    args.pfam_path = args.pfam_path+'/'
+  if not args.results_path.endswith('/'):
+    args.results_path = args.results_path+'/'
+
   # (1) create output directories:
-  for directory in [args.path_to_results,
+  for directory in [args.results_path,
                     # unprocessed HMMER results will go here (keep in case of a crash / for debugging):
-                    args.path_to_results+'hmmres-v'+args.pfam_version,
+                    args.results_path+'hmmres-v'+args.pfam_version,
                     # final, processed output will go here, for each domain (e.g., PF00096_zf-C2H2-v31.hmmres.gz):
-                    args.path_to_results+'processed-v'+args.pfam_version]:
+                    args.results_path+'processed-v'+args.pfam_version]:
     if not os.path.isdir(directory):
       call(['mkdir', directory])
 
   # (2) find all possible hmms to run on:
   #     NOTE: we assume files are named as PfamID_PfamName.hmm (e.g., PF00096_zf-C2H2.hmm)
-  hmms = sorted([a.replace('.hmm', '') for a in os.listdir(args.path_to_pfam+'hmms-v'+args.pfam_version)
+  hmms = sorted([a.replace('.hmm', '') for a in os.listdir(args.pfam_path+'hmms-v'+args.pfam_version)
                  if a.startswith('PF') and a.endswith('.hmm')])
   total_hmms_available = len(hmms)
 
   # (3) customize log file name if need be and subset to appropriate range of HMMs
   #     NOTE: in case we had a match that we couldn't understand nor rescue, keep track of it in the logfile
-  logfile = args.path_to_results+'processed-v'+args.pfam_version+'/problems.log'
+  logfile = args.results_path+'processed-v'+args.pfam_version+'/problems.log'
   if args.start != 0 or args.end < total_hmms_available:
     logfile = logfile.replace('.log', '-'+str(args.start)+'-'+str(args.end)+'.log')
     hmms = hmms[args.start:max(args.end, total_hmms_available)]  # Subset to a range of HMMs if it was specified
@@ -337,7 +345,7 @@ if __name__ == "__main__":
 
   # (5) finally, for each HMM
   for hmm in hmms:
-    hmmfile = args.path_to_pfam + hmm + '.hmm'
+    hmmfile = args.pfam_path+'hmms-v'+args.pfam_version+'/' + hmm + '.hmm'
 
     # (5a) check if HMM exists
     if not os.path.isfile(hmmfile):
@@ -350,7 +358,7 @@ if __name__ == "__main__":
     # (5b) run hmmsearch to subset the genes we want to actually find domain hits in
     #     NOTE: this is just an efficiency step, as this process is FAST but gives us less information
     call(['hmmsearch',
-          '--domtblout ' + args.path_to_results+'hmmres-v'+args.pfam_version+'/' + hmm + '.hmmres-orig',
+          '--domtblout ' + args.results_path+'hmmres-v'+args.pfam_version+'/' + hmm + '.hmmres-orig',
           '-o /dev/null',
           '-T 0 --domT 0 --incT 0 --incdomT 0',  # No cutoffs guarantees more thorough hits
           hmmfile,
@@ -358,8 +366,8 @@ if __name__ == "__main__":
     
     # (5c) Set the subset of sequence IDs to look through (to speed up process of finding matches):
     whichseqs = set()
-    if os.path.isfile(args.path_to_results+'hmmres-v'+args.pfam_version+'/' + hmm + '.hmmres-orig'):
-      for seq_line in open(args.path_to_results+'hmmres-v'+args.pfam_version+'/' + hmm + '.hmmres-orig'):
+    if os.path.isfile(args.results_path+'hmmres-v'+args.pfam_version+'/' + hmm + '.hmmres-orig'):
+      for seq_line in open(args.results_path+'hmmres-v'+args.pfam_version+'/' + hmm + '.hmmres-orig'):
         if seq_line.startswith('#'):
           continue
         whichseqs.add(seq_line.strip().split()[0])
@@ -377,7 +385,7 @@ if __name__ == "__main__":
       # start the clock to measure performance
       start = time.time()
 
-      outfile = args.path_to_results+'processed-v'+args.pfam_version+'/' + hmm + '-v' + args.pfam_version + '.hmmres.gz'
+      outfile = args.results_path+'processed-v'+args.pfam_version+'/' + hmm + '-v' + args.pfam_version + '.hmmres.gz'
       find_domain_matches(hmmfile, outfile, args.fasta_infile, whichseqs)
 
       # end the clock and print total elapsed time:

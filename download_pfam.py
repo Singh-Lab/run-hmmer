@@ -101,10 +101,15 @@ def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
 if __name__ == "__main__":
 
   # parse the command-line arguments
+  script_path = os.path.dirname(os.path.abspath(__file__))+'/'
+
   parser = argparse.ArgumentParser(description='Download all HMMs from the most recent version of Pfam.')
-  parser.add_argument('--path_to_pfam', type='str', help='Full path to a directory where Pfam HMMs should be stored.',
-                      default=os.getcwd() + '/pfam/')
+  parser.add_argument('--pfam_path', type='str', help='Full path to a directory where Pfam HMMs should be stored.',
+                      default=script_path + 'pfam/')
   args = parser.parse_args()
+
+  if not args.pfam_path.endswith('/'):
+    args.pfam_path = args.pfam_path+'/'
 
   # get information about the most recent version of Pfam:
   version, date, entries = pfam_release_info()
@@ -112,10 +117,10 @@ if __name__ == "__main__":
   sys.stderr.write('Pfam version ' + version + ', released ' + date + ', contains ' + entries + ' total HMMs.\n')
 
   # create directories as needed:
-  for directory in [args.path_to_pfam,
-                    args.path_to_pfam + 'hmms-v'+pfam_version]:
+  for directory in [args.pfam_path,
+                    args.pfam_path + 'hmms-v'+pfam_version]:
     if not os.path.isdir(directory):
       call(['mkdir', directory])
 
   # Download the most recent version of Pfam, storing HMMs in the proper directory:
-  pfam_hmm_download(args.path_to_pfam + 'hmms-v'+pfam_version, pfam_version)
+  pfam_hmm_download(args.pfam_path + 'hmms-v'+pfam_version, pfam_version)

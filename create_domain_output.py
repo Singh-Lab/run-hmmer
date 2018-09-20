@@ -303,19 +303,19 @@ def create_domsbyprot(fasta_infile,
 if __name__ == "__main__":
 
   # parse command-line arguments
-  path_to_script = os.path.dirname(os.path.abspath(__file__)) + '/'
+  script_path = os.path.dirname(os.path.abspath(__file__)) + '/'
 
   parser = argparse.ArgumentParser(description='Concatenate and filter all processed HMMER domain hit results.')
 
-  parser.add_argument('--path_to_pfam', type=str, default=path_to_script+'pfam/',
+  parser.add_argument('--pfam_path', type=str, default=script_path+'pfam/',
                       help='Full path to a directory where Pfam HMMs should be stored')
   parser.add_argument('--pfam_version', type=str, default='31', choices=[str(i) for i in range(28, 32)],
                       help='Pfam version we are running on.')
   parser.add_argument('--fasta_infile', type=str, help='Full path to fasta-formatted sequence file to run HMMER on.',
-                      default=path_to_script+'human_test_sequences.fa')
-  parser.add_argument('--path_to_results', type=str, default=path_to_script+'domains/',
+                      default=script_path+'human_test_sequences.fa')
+  parser.add_argument('--results_path', type=str, default=script_path+'domains/',
                       help='Full path to a directory where domain search results will be stored')
-
+  parser.add_argument('--outfile', type=str, default=script_path+'domains/domsbyprot-v31.tsv.gz')
   parser.add_argument('--concatenate_hmmer_results', dest='concatenate_hmmer_results', action='store_true',
                       default=False,
                       help='Concatenate individual HMMER results file into one, nonredundant results file.')
@@ -324,24 +324,30 @@ if __name__ == "__main__":
 
   args = parser.parse_args()
 
+  # edit path names
+  if not args.pfam_path.endswith('/'):
+    args.pfam_path = args.pfam_path+'/'
+  if not args.results_path.endswith('/'):
+    args.results_path = args.results_path+'/'
+
   # automatically set output file names:
-  concatenated_results_file = args.path_to_results+'allhmmresbyprot-v' + args.pfam_version + '.tsv.gz'
-  filtered_results_file = args.path_to_results+'domsbyprot-v' + args.pfam_version + '.tsv.gz'
+  concatenated_results_file = args.results_path+'allhmmresbyprot-v' + args.pfam_version + '.tsv.gz'
+  filtered_results_file = args.outfile
 
   if not args.concatenate_hmmer_results and not args.filter_domains:
     sys.stderr.write('No function specified, please run:\n' +
                      'python create_domain_output.py --concatenate_hmmer_results --filter_domains --path_to_pfam '+
-                     args.path_to_pfam + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
-                     args.fasta_infile + ' --path_to_results ' + args.path_to_results + ' \n')
+                     args.pfam_path + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
+                     args.fasta_infile + ' --path_to_results ' + args.results_path + ' \n')
     sys.exit(1)
 
   if args.concatenate_hmmer_results:
     # Concatenate all results from multiple files, removing duplicates as well as we can
-    create_allhmmresbyprot(args.fasta_infile, args.pfam_version, args.path_to_results, concatenated_results_file)
+    create_allhmmresbyprot(args.fasta_infile, args.pfam_version, args.results_path, concatenated_results_file)
     sys.stderr.write('For final, filtered output, remember to run:\n' + 
                      'python create_domain_output.py --filter_domains --path_to_pfam '+
-                     args.path_to_pfam + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
-                     args.fasta_infile + ' --path_to_results ' + args.path_to_results + ' \n')
+                     args.pfam_path + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
+                     args.fasta_infile + ' --path_to_results ' + args.results_path + ' \n')
 
   if args.filter_domains:
     # Restrict to domains that:
@@ -351,8 +357,8 @@ if __name__ == "__main__":
     if not os.path.isfile(concatenated_results_file):
       sys.stderr.write('No such file: '+concatenated_results_file+'! Please run:\n' +
                        'python create_domain_output.py --concatenate_hmmer_results --path_to_pfam '+
-                     args.path_to_pfam + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
-                     args.fasta_infile + ' --path_to_results ' + args.path_to_results + ' \n')
+                     args.pfam_path + ' --pfam_version '+ args.pfam_version + ' --fasta_infile ' +
+                     args.fasta_infile + ' --path_to_results ' + args.results_path + ' \n')
            
     create_domsbyprot(args.fasta_infile, args.path_to_pfam, args.pfam_version, concatenated_results_file,
                       filtered_results_file)
