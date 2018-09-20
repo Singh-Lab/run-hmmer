@@ -366,15 +366,7 @@ if __name__ == "__main__":
           '--incdomT 0',  # No cutoffs guarantees more thorough hits
           hmmfile,
           args.fasta_infile])
-    call([' '.join(['hmmsearch',
-          '-o /dev/null',
-          '--domtblout ' + args.results_path + 'hmmres-v' + args.pfam_version + '/' + hmm + '.hmmres-orig',
-          '-T 0',
-          '--domT 0',
-          '--incT 0',
-          '--incdomT 0',  # No cutoffs guarantees more thorough hits
-          hmmfile,
-          args.fasta_infile])])
+
     os.system(' '.join(['hmmsearch',
           '-o /dev/null',
           '--domtblout ' + args.results_path + 'hmmres-v' + args.pfam_version + '/' + hmm + '.hmmres-orig',
