@@ -23,7 +23,7 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
   """
 
   # Download the current release notes and save to a temporary directory
-  call(['wget', current_release_loc, '-O', 'pfam-current-release.txt'])
+  call('wget '+current_release_loc+' -O pfam-current-release.txt', shell=True)
 
   with open('pfam-current-release.txt') as x:
     x.next()
@@ -36,7 +36,7 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
         break
 
   # Remove the temporary file:
-  call(['rm', 'pfam-current-release.txt'])
+  call('rm pfam-current-release.txt', shell=True)
 
   month_abbreviations = {'01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May',
                          '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October',
@@ -62,11 +62,11 @@ def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
   if not output_directory.endswith('/'):
     output_directory = output_directory+'/'
   if not os.path.isdir(output_directory):
-    call(['mkdir', output_directory])
+    call('mkdir '+output_directory, shell=True)
 
   # Download the file containing all Pfam-A HMMs of interest:
   temporary_hmm_file = 'Pfam-A.current-v'+pfam_version+'-release.hmm' + ('.gz' if hmms_link.endswith('gz') else '.txt')
-  call(['wget', hmms_link, '-O', temporary_hmm_file])
+  call('wget '+hmms_link+' -O '+temporary_hmm_file, shell=True)
 
   # Keep track of current HMM accession and name (to print out at the appropriate time)
   current_name, current_accession = '', ''
@@ -94,7 +94,7 @@ def pfam_hmm_download(output_directory='hmms-v31/', pfam_version='31',
         current_accession = l.strip().split()[-1]
   hmm_infile.close()
 
-  call(['rm', temporary_hmm_file])
+  call('rm '+temporary_hmm_file, shell=True)
 
   sys.stderr.write('Finished processing all HMMs from ' + hmms_link + ' into ' + output_directory + '\n')
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
   for directory in [args.pfam_path,
                     args.pfam_path + 'hmms-v'+pfam_version]:
     if not os.path.isdir(directory):
-      call(['mkdir', directory])
+      call('mkdir '+directory, shell=True)
 
   # Download the most recent version of Pfam, storing HMMs in the proper directory:
   pfam_hmm_download(args.pfam_path + 'hmms-v'+pfam_version+'/', pfam_version)
