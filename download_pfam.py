@@ -11,6 +11,7 @@ import sys
 import argparse
 from subprocess import call
 
+
 ####################################################################################################
 
 def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfam/' +
