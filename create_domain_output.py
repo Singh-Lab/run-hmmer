@@ -25,13 +25,16 @@ HMMINFO = {'27': {'date': 'March 2013', 'entries': '14,831'},
            '30': {'date': 'June 2016', 'entries': '16,306'},
            '31': {'date': 'March 2017', 'entries': '16,712'}}
 
+# Full path to the directory containing this script:
+REPO_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
+
 
 ####################################################################################################
 
 def create_allhmmresbyprot(fasta_infile,
                            pfam_version='31',
-                           results_directory=os.path.dirname(os.path.abspath(__file__)) + '/domains/processed-v31/',
-                           outfile=os.path.dirname(os.path.abspath(__file__)) + '/domains/allhmmresbyprot-v31.tsv.gz'):
+                           results_directory=REPO_DIR+'domains/processed-v31/',
+                           outfile=REPO_DIR+'domains/allhmmresbyprot-v31.tsv.gz'):
   """
   :param fasta_infile: full path to an input FASTA file that HMMER was run on (for header information)
   :param pfam_version: Which Pfam version to use? 31 is our standard
@@ -84,8 +87,7 @@ def create_allhmmresbyprot(fasta_infile,
 
 ####################################################################################################
 
-def find_domains_from_file(concatenated_file=os.path.dirname(os.path.abspath(__file__)) +
-                                             '/domains/processed-v31/allhmmresbyprot-v31.tsv.gz'):
+def find_domains_from_file(concatenated_file=REPO_DIR+'domains/processed-v31/allhmmresbyprot-v31.tsv.gz'):
   """
   :param concatenated_file: full path to a formatted HMMER result file
   :return: set of all domains found in that HMMER result file
@@ -162,12 +164,11 @@ def return_passing_hits(current_hits, gathering_thresholds):
 ####################################################################################################
 
 def create_domsbyprot(fasta_infile,
-                      path_to_pfam=os.path.dirname(os.path.abspath(__file__)) + '/pfam/hmms-v31/',
+                      path_to_pfam=REPO_DIR+'pfam/hmms-v31/',
                       pfam_version='31',
-                      results_directory=os.path.dirname(os.path.abspath(__file__)) + '/domains/processed-v31/',
-                      concatenated_file=os.path.dirname(os.path.abspath(__file__)) +
-                                        '/domains/allhmmresbyprot-v31.tsv.gz',
-                      filtered_outfile=os.path.dirname(os.path.abspath(__file__)) + '/domains/domsbyprot-v31.txt.gz'):
+                      results_directory=REPO_DIR+'domains/processed-v31/',
+                      concatenated_file=REPO_DIR+'domains/allhmmresbyprot-v31.tsv.gz',
+                      filtered_outfile=REPO_DIR'domains/domsbyprot-v31.txt.gz'):
   """
   :param fasta_infile: full path to the FASTA file that HMMER was run on (for header information)
   :param path_to_pfam: full path to a directory containing all Pfam HMMs (required for filtering results)
@@ -306,19 +307,17 @@ def create_domsbyprot(fasta_infile,
 if __name__ == "__main__":
 
   # parse command-line arguments
-  script_path = os.path.dirname(os.path.abspath(__file__)) + '/'
-
   parser = argparse.ArgumentParser(description='Concatenate and filter all processed HMMER domain hit results.')
 
-  parser.add_argument('--pfam_path', type=str, default=script_path + 'pfam/',
+  parser.add_argument('--pfam_path', type=str, default=REPO_DIR+'pfam/',
                       help='Full path to a directory where Pfam HMMs should be stored')
   parser.add_argument('--pfam_version', type=str, default='31', choices=[str(n) for n in range(28, 32)],
                       help='Pfam version we are running on.')
   parser.add_argument('--fasta_infile', type=str, help='Full path to fasta-formatted sequence file to run HMMER on.',
-                      default=script_path + 'human_test_sequences.fa')
-  parser.add_argument('--results_path', type=str, default=script_path + 'domains/',
+                      default=REPO_DIR+'human_test_sequences.fa')
+  parser.add_argument('--results_path', type=str, default=REPO_DIR+'domains/',
                       help='Full path to a directory where domain search results will be stored')
-  parser.add_argument('--outfile', type=str, default=script_path + 'domains/domsbyprot-v31.tsv.gz')
+  parser.add_argument('--outfile', type=str, default=REPO_DIR+'domains/domsbyprot-v31.tsv.gz')
   parser.add_argument('--concatenate_hmmer_results', dest='concatenate_hmmer_results', action='store_true',
                       default=False,
                       help='Concatenate individual HMMER results file into one, nonredundant results file.')
