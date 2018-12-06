@@ -59,7 +59,7 @@ python create_domain_output.py --filter_domains
                                --pfam_path pfam/
                                --pfam_version 31
                                --fasta_infile <full path to NON-COMPRESSED fasta-formatted sequence file>
-                               --results_path domains/
+                               --results_path domains/processed-v31/
                                --outfile domains/domsbyprot.txt.gz
 ```
 
