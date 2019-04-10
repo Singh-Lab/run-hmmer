@@ -292,7 +292,7 @@ if __name__ == "__main__":
 
   parser.add_argument('--pfam_path', type=str, default=script_path + 'pfam/',
                       help='Full path to a directory where Pfam HMMs should be stored')
-  parser.add_argument('--pfam_version', type=str, default='31', choices=[str(n) for n in range(28, 32)],
+  parser.add_argument('--pfam_version', type=str, default='31', choices=[str(n) for n in range(28, 33)],
                       help='Pfam version we are running on.')
   parser.add_argument('--fasta_infile', type=str, help='Full path to fasta-formatted sequence file to run HMMER on.')
   parser.add_argument('--results_path', type=str, default=script_path + 'domains/',

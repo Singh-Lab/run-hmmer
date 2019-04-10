@@ -23,7 +23,8 @@ HMMINFO = {'27': {'date': 'March 2013', 'entries': '14,831'},
            '28': {'date': 'May 2015', 'entries': '16,230'},
            '29': {'date': 'December 2015', 'entries': '16,295'},
            '30': {'date': 'June 2016', 'entries': '16,306'},
-           '31': {'date': 'March 2017', 'entries': '16,712'}}
+           '31': {'date': 'March 2017', 'entries': '16,712'},
+           '32': {'date': 'October 2018', 'entries': '17,929'}}
 
 # Full path to the directory containing this script:
 REPO_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -168,7 +169,7 @@ def create_domsbyprot(fasta_infile,
                       pfam_version='31',
                       results_directory=REPO_DIR+'domains/processed-v31/',
                       concatenated_file=REPO_DIR+'domains/allhmmresbyprot-v31.tsv.gz',
-                      filtered_outfile=REPO_DIR'domains/domsbyprot-v31.txt.gz'):
+                      filtered_outfile=REPO_DIR+'domains/domsbyprot-v31.txt.gz'):
   """
   :param fasta_infile: full path to the FASTA file that HMMER was run on (for header information)
   :param path_to_pfam: full path to a directory containing all Pfam HMMs (required for filtering results)
@@ -311,7 +312,7 @@ if __name__ == "__main__":
 
   parser.add_argument('--pfam_path', type=str, default=REPO_DIR+'pfam/',
                       help='Full path to a directory where Pfam HMMs should be stored')
-  parser.add_argument('--pfam_version', type=str, default='31', choices=[str(n) for n in range(28, 32)],
+  parser.add_argument('--pfam_version', type=str, default='31', choices=[str(n) for n in range(28, 33)],
                       help='Pfam version we are running on.')
   parser.add_argument('--fasta_infile', type=str, help='Full path to fasta-formatted sequence file to run HMMER on.',
                       default=REPO_DIR+'human_test_sequences.fa')
