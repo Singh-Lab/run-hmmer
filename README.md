@@ -27,7 +27,7 @@ For instance, to run on HMMs 0, 1, and 2, we would call process_hmmer.py with --
 
 ```bash
 python process_hmmer.py --pfam_path pfam/ 
-                        --pfam_version 31 
+                        --pfam_version 32 
                         --fasta_infile <full path to NON-GZIPPED fasta-formatted sequence file> 
                         --results_path domains/ 
                         --start 0 
@@ -38,17 +38,22 @@ python process_hmmer.py --pfam_path pfam/
 
 ## Combining HMMER output
 
-We run both HMMER 2.3.2 and HMMER 3.1b2 and therefore expect lots of duplicate domains. We combine all output across all Pfam HMMs with the following call, which will produce a file called allhmmresbyprot-v31.txt.gz. (You can change this name, and perhaps also what subset of HMM results you want to include, in the script.)
+We run both HMMER 2.3.2 and HMMER 3.1b2 and therefore expect lots of duplicate domains. We combine all output across 
+all Pfam HMMs with the following call, which will produce a file called `all-hmmer-results-by-prot-v32.txt.gz`. You can
+change this name using the `--hmmer_results` argument, and you can change the subset of HMMER results to be included 
+(if desired) by editing the script directly. 
 
 ```bash
 python create_domain_output.py --concatenate_hmmer_results 
                                --pfam_path pfam/
-                               --pfam_version 31
+                               --pfam_version 32
                                --fasta_infile <full path to NON-COMPRESSED fasta-formatted sequence file>
-                               --results_path domains/processed-v31/
+                               --results_path domains/processed-v32/
+                               --hmmer_results domains/all-hmmer-results-by-prot-v32.txt.gz
 ```
 
-We **must** run the previous function before calling the following, as the following depends on the intermediate results. We run this to restrict to domains that:
+We **must** run the previous function before calling the following, as the following depends on the intermediate 
+results (i.e., found in `all-hmmer-results-by-prot-v32.txt.gz`). We run this step to restrict to domains that:
 
 * are complete (i.e., matched from the very start to the very end of the HMM)
 * passed the gathering threshold (taking into account both domain- and sequence-based cutoffs)
@@ -57,10 +62,12 @@ We **must** run the previous function before calling the following, as the follo
 ```bash
 python create_domain_output.py --filter_domains
                                --pfam_path pfam/
-                               --pfam_version 31
+                               --pfam_version 32
                                --fasta_infile <full path to NON-COMPRESSED fasta-formatted sequence file>
-                               --results_path domains/processed-v31/
-                               --outfile domains/domsbyprot.txt.gz
+                               --results_path domains/processed-v32/
+                               --hmmer_results domains/all-hmmer-results-by-prot-v32.txt.gz
+                               --processed_results domains/all-domains-by-prot-v32.txt.gz
 ```
 
-This produces a single, beautiful file (called domsbyprot.txt.gz) with all the domains from your original FASTA file.
+This produces a single, beautiful file (called `all-domains-by-prot-v32.txt.gz`) with all the domains from your 
+original FASTA file.
