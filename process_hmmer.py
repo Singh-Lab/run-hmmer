@@ -29,7 +29,7 @@ def idgen(size=20, chars=ascii_letters + digits):
              (intended use as a temporary file name); lowercase & uppercase letters and digits 0-9
     """
 
-    return ''.join(choice(chars) for _ in xrange(size))
+    return ''.join(choice(chars) for _ in range(size))
 
 
 ####################################################################################################
@@ -147,7 +147,7 @@ def process_hmmer_output(hmmresfile, outputfile, error_logfile, pfam):
         currgapi = 0
 
         # Determine the actual match state -> sequence mapping. Insertion states are prefixed with an "a"
-        for i in xrange(len(hmmmatch)):
+        for i in range(len(hmmmatch)):
             if hmmmatch[i] != '.':
                 currgap = False
                 findex.append(str(mapindices[startingindex]))
@@ -205,7 +205,7 @@ def find_domain_matches(hmm_file, output_file, infile, error_logfile, ids=()):
 
     chmm = hmm_file.split('/')[-1].replace('.hmm', '')  # PfamID_PfamName
 
-    output_handle = gzip.open(output_file, 'w') if output_file.endswith('gz') else open(output_file, 'w')
+    output_handle = gzip.open(output_file, 'wt') if output_file.endswith('gz') else open(output_file, 'w')
     output_handle.write('# All matching hits from the HMM found in ' + hmm_file + '\n')
     output_handle.write('# on the protein sequences found in ' + infile + '\n')
     output_handle.write(
@@ -213,7 +213,7 @@ def find_domain_matches(hmm_file, output_file, infile, error_logfile, ids=()):
                    'Target_Seq', 'HMM_Pos', 'Description']) + '\n')
 
     # NOW, let's search, seq by seq...
-    input_handle = gzip.open(infile) if infile.endswith('gz') else open(infile)
+    input_handle = gzip.open(infile, 'rt') if infile.endswith('gz') else open(infile)
     while True:
         current_line = input_handle.readline()
         if not current_line:

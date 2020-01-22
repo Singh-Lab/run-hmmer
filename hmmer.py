@@ -86,7 +86,7 @@ def parsehmmer232(unparsed_output, hmm_name, seqid_to_desc):
     :return: a tab-delimited table with all domain hits and additional important information
     """
 
-    tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in xrange(10)) + '.txt'
+    tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in range(10)) + '.txt'
     output_handle = open(tmpfile, 'w')
 
     # Some variables to be used while looping through file
@@ -195,7 +195,7 @@ def parsehmmer3(unparsed_output, hmm_name, seqid_to_desc):
     :return: a tab-delimited table with all domain hits and additional important information
     """
 
-    tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in xrange(10)) + '.txt'
+    tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in range(10)) + '.txt'
     output_handle = open(tmpfile, 'w')
 
     reach = False  # Have we reached a match yet?
@@ -297,10 +297,10 @@ def runhmmer232(hmm_file, input_prot_file, results_out, hmm_name='', seqid_to_de
         seqid_to_desc = seqdesc_from_fasta(input_prot_file)
 
     with open(hmm_file) as x:
-        firstline = x.next()
+        firstline = x.readline()
 
     if not firstline.startswith('HMMER2.0'):
-        tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in xrange(10)) + '.txt'
+        tmpfile = '/tmp/' + ''.join(choice(ascii_letters + digits) for _ in range(10)) + '.txt'
         call('hmmconvert -2 ' + hmm_file + ' > ' + tmpfile, shell=True)
         call('chmod 755 ' + tmpfile, shell=True)
         hmm_file = tmpfile
@@ -385,8 +385,8 @@ def find_domains(hmms_to_run, input_prot_file, results_out):
     for hmmfile in hmms_to_run:
         hmmname = hmmname_from_hmmfile(hmmfile)
 
-        for hmmfunc in [runhmmer232, runhmmer3]:
-            tmpfiles.append('/tmp/' + ''.join(choice(ascii_letters + digits) for _ in xrange(10)) + '.tmp')
+        for hmmfunc in [runhmmer3]:
+            tmpfiles.append('/tmp/' + ''.join(choice(ascii_letters + digits) for _ in range(10)) + '.tmp')
             hmmfunc(hmmfile, input_prot_file, tmpfiles[-1], hmmname, descs)
 
     # Keep ALL UNIQUE output, sort it, and print it into outfile

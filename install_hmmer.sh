@@ -8,27 +8,28 @@
 # NOTE: I got a "Can't locate getopts.pl in @INC" failure when I tried to install HMMER 2.3.2 and needed to run:
 # sudo apt-get install libperl4-corelibs-perl
 
-wget http://eddylab.org/software/hmmer/2.3.2/hmmer-2.3.2.tar.gz
-tar -xvzf hmmer-2.3.2.tar.gz
-cd hmmer-2.3.2
-./configure
-make
-make check
-for file in hmmalign hmmbuild hmmcalibrate hmmconvert hmmemit hmmfetch hmmindex hmmpfam hmmsearch ; do
-  sudo cp src/$file /usr/local/bin/${file}232;
-done
-cd ../
-rm hmmer-2.3.2.tar.gz
+# PYTHON 3 version of run-hmmer is for only one version of hmmer
+#wget http://eddylab.org/software/hmmer/2.3.2/hmmer-2.3.2.tar.gz
+#tar -xvzf hmmer-2.3.2.tar.gz
+#cd hmmer-2.3.2
+#./configure
+#make
+#make check
+#for file in hmmalign hmmbuild hmmcalibrate hmmconvert hmmemit hmmfetch hmmindex hmmpfam hmmsearch ; do
+#  sudo cp src/$file /usr/local/bin/${file}232;
+#done
+#cd ../
+#rm hmmer-2.3.2.tar.gz
 
 
-# And download and install HMMER 3.1b2 (as the default!)
+# And download and install HMMER 3.3 (as the default!)
 
-wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2.tar.gz
-tar -xvzf hmmer-3.1b2.tar.gz
-cd hmmer-3.1b2
+wget http://eddylab.org/software/hmmer/hmmer-3.3.tar.gz
+tar -xvzf hmmer-3.3.tar.gz
+cd hmmer-3.3
 ./configure
 make
 make check
 sudo make install
 cd ../
-rm hmmer-3.1b2.tar.gz
+rm hmmer-3.3.tar.gz
