@@ -289,7 +289,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--start', type=int, default=0,
                         help='Starting 0-index of subset of domains to run on.')
-    parser.add_argument('--end', type=int,
+    parser.add_argument('--end', type=int, default=sys.maxsize,
                         help='Ending 0-index of subset of domains to run on.')
 
     parser.add_argument('--pfam_path', type=str, default=script_path + 'pfam/',

@@ -44,7 +44,7 @@ def create_allhmmresbyprot(fasta_infile,
     :return: concatenate all HMMER results into a single file, removing duplicates as best we can
              between the two versions of HMMER
     """
-    output_handle = gzip.open(outfile, 'w') if outfile.endswith('gz') else open(outfile, 'w')
+    output_handle = gzip.open(outfile, 'wt') if outfile.endswith('gz') else open(outfile, 'w')
     output_handle.write(
         '# HMMER 2.3.2 and HMMER 3.1b2 results on all protein sequences found in ' + fasta_infile + '\n')
     output_handle.write('# Pfam version ' + pfam_version + '.0, released ' + HMMINFO[pfam_version]['date'] +
@@ -62,7 +62,7 @@ def create_allhmmresbyprot(fasta_infile,
         # (targetID, start, end, pfamHMM, desc) -> (bitscore, evalue, HMM sequence, target sequence, HMM match states)
         results = {}
 
-        results_handle = gzip.open(results_directory + fname)
+        results_handle = gzip.open(results_directory + fname, 'rt')
         for res_line in results_handle:
             if not res_line.startswith('#') and len(res_line.strip()) > 0:
                 targ_id, hmm_id, evalue, bitscore, tstart, tend, hmmseq, tseq, hmmpos, desc = res_line[:-1].split('\t')
@@ -99,7 +99,7 @@ def find_domains_from_file(concatenated_file=REPO_DIR + 'domains/processed-v32/a
     :return: set of all domains found in that HMMER result file
     """
 
-    dom_handle = gzip.open(concatenated_file) if concatenated_file.endswith('.gz') else open(concatenated_file)
+    dom_handle = gzip.open(concatenated_file, 'rt') if concatenated_file.endswith('.gz') else open(concatenated_file)
     allhmms = set([a.strip().split('\t')[1] for a in dom_handle if not a.startswith('#')])
     dom_handle.close()
 
@@ -218,7 +218,7 @@ def create_domsbyprot(fasta_infile,
     current_sum = {}  # pfamID -> sum
 
     # Process all domains!
-    res_handle = gzip.open(concatenated_file) if concatenated_file.endswith('.gz') else open(concatenated_file)
+    res_handle = gzip.open(concatenated_file, 'rt') if concatenated_file.endswith('.gz') else open(concatenated_file)
     for res_line in res_handle:
         if res_line.startswith('#') or len(res_line.strip().split('\t')) < 10:
             continue
@@ -245,6 +245,7 @@ def create_domsbyprot(fasta_infile,
 
         # (2) Make sure that the first and last positions are ungapped:
         mstate_to_seq = zip(hmm_pos.split(','), list(targ_seq))
+        print(mstate_to_seq)
         if mstate_to_seq[-1][1] == '-' or mstate_to_seq[0][1] == '-':
             continue
 
@@ -287,7 +288,7 @@ def create_domsbyprot(fasta_infile,
                 prot_to_domlist[current_protid].append(hit)
 
     # Write out all sorted results:
-    output_handle = gzip.open(filtered_outfile, 'w') if filtered_outfile.endswith('gz') else open(filtered_outfile, 'w')
+    output_handle = gzip.open(filtered_outfile, 'wt') if filtered_outfile.endswith('gz') else open(filtered_outfile, 'w')
     output_handle.write('# All COMPLETE Pfam domains (version ' + pfam_version + '.0, ' +
                         HMMINFO[pfam_version]['date'] + ', ' + HMMINFO[pfam_version]['entries'] + ' entries) that ' +
                         'passed the gathering threshold found in all amino acid sequences from\n')
