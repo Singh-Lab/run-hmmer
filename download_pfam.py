@@ -27,8 +27,8 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
 
     rel_date, num_entries = '', ''
     with open('pfam-current-release.txt') as curr_rel_handle:
-        curr_rel_handle.next()
-        release = curr_rel_handle.next().strip().split()[1]  # RELEASE information always on the second line
+        curr_rel_handle.readline()
+        release = curr_rel_handle.readline().strip().split()[1]  # RELEASE information always on the second line
 
         for rel_line in curr_rel_handle:
             if rel_line.strip().startswith(release):
@@ -77,8 +77,9 @@ def pfam_hmm_download(output_directory='hmms-v32/', pfam_version='32',
     # Keep track of all lines belonging to this HMM:
     current_lines = []
 
-    hmm_infile = gzip.open(temporary_hmm_file) if temporary_hmm_file.endswith('gz') else open(temporary_hmm_file)
+    hmm_infile = gzip.open(temporary_hmm_file, 'rt') if temporary_hmm_file.endswith('gz') else open(temporary_hmm_file)
 
+    #lines = hmm_infile.readline()
     for l in hmm_infile:
         current_lines.append(l)
 
@@ -86,11 +87,10 @@ def pfam_hmm_download(output_directory='hmms-v32/', pfam_version='32',
             if len(current_lines) > 0:
                 hmm_outfile = open(output_directory + current_accession.split('.')[0] + '_' + current_name + '.hmm',
                                    'w')
-                map(hmm_outfile.write, current_lines)
+                hmm_outfile.writelines(current_lines)
                 hmm_outfile.close()
             current_name, current_accession = '', ''
             current_lines = []
-
         else:
             if l.startswith('NAME '):
                 current_name = l.strip().split()[-1]
