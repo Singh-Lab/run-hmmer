@@ -399,9 +399,11 @@ def find_domains(hmms_to_run, input_prot_file, results_out):
                 lines.add(l)
         call(['rm', f])
 
-    output_handle = open(results_out, 'w')
-    map(output_handle.write, sorted(list(lines)))
-    output_handle.close()
+    with open(results_out, 'wt') as output_handle :
+        output_handle.writelines(sorted(list(lines)))
+    #output_handle = open(results_out, 'wt')
+    #map(output_handle.write, sorted(list(lines)))
+    #output_handle.close()
 
 
 ####################################################################################################

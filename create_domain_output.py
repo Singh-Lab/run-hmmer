@@ -124,11 +124,16 @@ def get_high_information_content(hmmfile):
         for hmm_line in hmm_handle:
             if hmm_line.startswith('HMM') and not hmm_line.startswith('HMMER'):
                 aas = hmm_line.strip().split()[1:]  # amino acids in order
-                hmm_handle.next()  # description of transition probabilities
-                hmm_handle.next()  # begin state match state emission probabilities (unnecessary)
-                hmm_handle.next()  # begin state insertion state emission probabilities (also unnecessary)
-                hmm_handle.next()  # begin state transition probabilities
-                reach_hmm = True  # Have we reached the actual HMM model yet?
+                #hmm_handle.next()  # description of transition probabilities
+                #hmm_handle.next()  # begin state match state emission probabilities (unnecessary)
+                #hmm_handle.next()  # begin state insertion state emission probabilities (also unnecessary)
+                #hmm_handle.next()  # begin state transition probabilities
+                #reach_hmm = True  # Have we reached the actual HMM model yet?
+                hmm_handle.read()
+                hmm_handle.read()
+                hmm_handle.read()
+                hmm_handle.read()
+                reach_hmm = True
                 continue
             elif reach_hmm and len(hmm_line.strip().split()) > len(aas):
                 matchstate = hmm_line.strip().split()[0]
@@ -244,8 +249,8 @@ def create_domsbyprot(fasta_infile,
             continue
 
         # (2) Make sure that the first and last positions are ungapped:
-        mstate_to_seq = zip(hmm_pos.split(','), list(targ_seq))
-        print(mstate_to_seq)
+        mstate_to_seq = list(zip(hmm_pos.split(','), list(targ_seq)))
+        
         if mstate_to_seq[-1][1] == '-' or mstate_to_seq[0][1] == '-':
             continue
 

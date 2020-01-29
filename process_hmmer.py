@@ -17,6 +17,7 @@ from string import ascii_letters, digits
 from random import choice
 from Bio import pairwise2
 from hmmer import find_domains
+from pprint import pprint
 
 
 ####################################################################################################
@@ -46,12 +47,12 @@ def process_hmmer_output(hmmresfile, outputfile, error_logfile, pfam):
              makes this non-trivial)
     """
 
-    output_handle = gzip.open(outputfile, 'w') if outputfile.endswith('gz') else open(outputfile, 'w')
+    output_handle = gzip.open(outputfile, 'wt') if outputfile.endswith('gz') else open(outputfile, 'w')
 
-    input_handle = gzip.open(hmmresfile) if hmmresfile.endswith('gz') else open(hmmresfile)
+    input_handle = gzip.open(hmmresfile, 'rt') if hmmresfile.endswith('gz') else open(hmmresfile)
 
     # Skip the infile header and write out a new header:
-    input_handle.next()
+    input_handle.readline()
     output_handle.write('\t'.join(['#Target', 'HMM', 'E-value', 'BitScore', 'TargetStart', 'TargetEnd', 'HMM_Seq',
                                    'Ali_Seq', 'Pos_Seq', 'Description']) + '\n')
 
@@ -266,7 +267,7 @@ def find_domain_matches(hmm_file, output_file, infile, error_logfile, ids=()):
             os.system('rm ' + tmpfiles[1])
 
             with open(tmpfiles[2]) as y:
-                y.next()
+                y.readline()
                 for l2 in y:
                     # Write out the exact same line, but update the HMM name to include Pfam ID (e.g., PF00096) also
                     output_handle.write(
@@ -325,6 +326,10 @@ if __name__ == "__main__":
     hmms = sorted([a.replace('.hmm', '') for a in os.listdir(args.pfam_path + 'hmms-v' + args.pfam_version)
                    if a.startswith('PF') and a.endswith('.hmm')])
     total_hmms_available = len(hmms)
+    
+    #debug to find missing hmm files
+    #pprint([str(i)+":"+hmms[i] for i in range(total_hmms_available)])
+    #exit()
 
     # (3) customize log file name if need be and subset to appropriate range of HMMs
     #     NOTE: in case we had a match that we couldn't understand nor rescue, keep track of it in the logfile
@@ -344,7 +349,7 @@ if __name__ == "__main__":
         call(['gzip', '-d', args.fasta_infile])
 
     allseqs = set()
-    fasta_handle = gzip.open(args.fasta_infile) if args.fasta_infile.endswith('gz') else open(args.fasta_infile)
+    fasta_handle = gzip.open(args.fasta_infile, 'rt') if args.fasta_infile.endswith('gz') else open(args.fasta_infile)
     for seq_line in fasta_handle:
         if seq_line.startswith('>'):
             allseqs.add(seq_line[1:-1].split()[0])
