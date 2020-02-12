@@ -48,7 +48,6 @@ if __name__ == "__main__":
         hmm_id = hmm_file.split('_')[0]
         hmm_file_dict[hmm_id] = hmm_file
     
-    print(hmm_file_dict['PF00595'])
     fasta = fasta_util.read_fasta(args.fasta_infile)
     for (comment, sequence) in fasta :
         (chain, _, _, _, _) = fasta_util.split_comment_chain(comment)[0]
@@ -57,7 +56,7 @@ if __name__ == "__main__":
             continue
         for hmm in domain_dict[chain] :
             outfile = args.results_path+hmm+'_'+chain+'.hmmres.gz'
-            process_hmmer.find_domain_matches(hmm_dir+'/'+hmm_file_dict[hmm], outfile, args.fasta_infile, 'error.log', [chain])
+            process_hmmer.find_domain_matches(hmm_dir+hmm_file_dict[hmm], outfile, args.fasta_infile, 'error.log', [chain])
 
 
     
