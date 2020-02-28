@@ -223,64 +223,81 @@ def create_domsbyprot(fasta_infile,
     current_sum = {}  # pfamID -> sum
 
     # Process all domains!
-    res_handle = gzip.open(concatenated_file, 'rt') if concatenated_file.endswith('.gz') else open(concatenated_file)
-    for res_line in res_handle:
-        if res_line.startswith('#') or len(res_line.strip().split('\t')) < 10:
-            continue
-
-        (prot_id, hmm_id, evalue, bit_score, targ_start, targ_end, hmm_seq,
-         targ_seq, hmm_pos, desc) = res_line[:-1].split('\t')[:10]
-
-        # Save all relevant domain hits for the previous protein:
-        if prot_id != current_protid:
-            passing_hits = return_passing_hits(current_sum, gacutoff)
-
-            if len(passing_hits) > 0:
-                if current_protid not in prot_to_domlist:
-                    prot_to_domlist[current_protid] = []
-                for hit in passing_hits:
-                    prot_to_domlist[current_protid].append(hit)
-
-            current_protid = prot_id
-            current_sum = {}
-
-        # (1) Include only COMPLETE domains:
-        if not hmm_pos.startswith('1,') or not hmm_pos.endswith(',' + hmm_lengths[hmm_id]):
-            continue
-
-        # (2) Make sure that the first and last positions are ungapped:
-        mstate_to_seq = list(zip(hmm_pos.split(','), list(targ_seq)))
-        
-        if mstate_to_seq[-1][1] == '-' or mstate_to_seq[0][1] == '-':
-            continue
-
-        # (3) High information-content sites must have the appropriate residue assignment:
-        if hmm_id in required_states:
-            bad_match = False
-            for hmm_state, seq_aa in mstate_to_seq:
-                if hmm_state in required_states[hmm_id] and seq_aa != required_states[hmm_id][hmm_state]:
-                    bad_match = True
-                    break
-            if bad_match:
+    line_count = 0
+    total_hits = 0
+    with gzip.open(concatenated_file, 'rt') if concatenated_file.endswith('.gz') else open(concatenated_file) as res_handle:
+        for res_line in res_handle:
+            line_count+=1
+            if res_line.startswith('#') or len(res_line.strip().split('\t')) < 10:
                 continue
 
-        # Map HMM match state -> the HMM sequence expected -> the actual sequence hit
-        seq = range(int(targ_start) - 1, int(targ_end))  # HMM sequence
-        i = 0  # keep track of ungapped matches
-        curr_hmm_states = []
-        for hmm_state, seq_aa in mstate_to_seq:
-            if seq_aa != '-':
-                curr_hmm_states.append((hmm_state, seq[i], seq_aa.upper()))  # THIS HAS BEEN CHECKED!! REAL (0) INDICES!
-                i += 1
+            (prot_id, hmm_id, evalue, bit_score, targ_start, targ_end, hmm_seq,
+            targ_seq, hmm_pos, desc) = res_line[:-1].split('\t')[:10]
 
-        # Store this domain hit (along with match state mapping) to potentially include later on.
-        if hmm_id not in current_sum:
-            current_sum[hmm_id] = {}
-        start_pos = min([seq_index for _, seq_index, _ in curr_hmm_states])
-        if start_pos not in current_sum[hmm_id] or float(bit_score) > current_sum[hmm_id][start_pos][1]:
-            current_sum[hmm_id][start_pos] = (tuple(curr_hmm_states), float(bit_score))
+            # Save all relevant domain hits for the previous protein:
+            if prot_id != current_protid:
+                passing_hits = return_passing_hits(current_sum, gacutoff)
+                if len(passing_hits) > 0:
+                    if current_protid not in prot_to_domlist:
+                        prot_to_domlist[current_protid] = []
+                    for hit in passing_hits:
+                        prot_to_domlist[current_protid].append(hit)
+                        total_hits += 1
 
-    res_handle.close()
+                current_protid = prot_id
+                current_sum = {}
+
+            # (1) Include only COMPLETE domains:
+            #if not hmm_pos.startswith('1,') or not hmm_pos.endswith(',' + hmm_lengths[hmm_id]):
+            #    continue
+
+            # (1a) Must capture 80% of the domain:
+
+            try : 
+                hstart = hmm_pos.find(',')  if hmm_pos.find(',') > -1 else 1
+                hstop = hmm_pos.rfind(',')+1
+                if( (int(hmm_pos[hstop:]) - int(hmm_pos[0:hstart])) / int(hmm_lengths[hmm_id]) < 0.80 ) :
+                    continue
+            except ValueError: 
+                print("length: "+hmm_lengths[hmm_id])
+                print("start: " +hstart)
+                print("stop: "+ hstop)
+                print("hmm_id: "+hmm_id)
+                print(hmm_pos)
+                exit(1)
+
+            # (2) Make sure that the first and last positions are ungapped:
+            mstate_to_seq = list(zip(hmm_pos.split(','), list(targ_seq)))
+            
+            #if mstate_to_seq[-1][1] == '-' or mstate_to_seq[0][1] == '-':
+            #    continue
+
+            # (3) High information-content sites must have the appropriate residue assignment:
+            if hmm_id in required_states:
+                bad_match = False
+                for hmm_state, seq_aa in mstate_to_seq:
+                    if hmm_state in required_states[hmm_id] and seq_aa != required_states[hmm_id][hmm_state]:
+                        bad_match = True
+                        break
+                if bad_match:
+                    continue
+
+            # Map HMM match state -> the HMM sequence expected -> the actual sequence hit
+            seq = range(int(targ_start) - 1, int(targ_end))  # HMM sequence
+            i = 0  # keep track of ungapped matches
+            curr_hmm_states = []
+            for hmm_state, seq_aa in mstate_to_seq:
+                if seq_aa != '-':
+                    curr_hmm_states.append((hmm_state, seq[i], seq_aa.upper()))  # THIS HAS BEEN CHECKED!! REAL (0) INDICES!
+                    i += 1
+
+            # Store this domain hit (along with match state mapping) to potentially include later on.
+            if hmm_id not in current_sum:
+                current_sum[hmm_id] = {}
+            start_pos = min([seq_index for _, seq_index, _ in curr_hmm_states])
+            if start_pos not in current_sum[hmm_id] or float(bit_score) > current_sum[hmm_id][start_pos][1]:
+                current_sum[hmm_id][start_pos] = (tuple(curr_hmm_states), float(bit_score))
+
 
     # Store information for the very last protein:
     if len(current_sum.keys()) > 0:
@@ -291,6 +308,8 @@ def create_domsbyprot(fasta_infile,
                 prot_to_domlist[current_protid] = []
             for hit in passing_hits:
                 prot_to_domlist[current_protid].append(hit)
+                total_hits += 1
+
 
     # Write out all sorted results:
     output_handle = gzip.open(filtered_outfile, 'wt') if filtered_outfile.endswith('gz') else open(filtered_outfile, 'w')
@@ -315,7 +334,27 @@ def create_domsbyprot(fasta_infile,
 
 
 ####################################################################################################
-
+def create_condensed(fasta_infile,
+                    path_to_pfam=REPO_DIR + 'pfam/hmms-v32/',
+                    pfam_version='32',
+                    results_directory=REPO_DIR + 'domains/processed-v32/',
+                    concatenated_file=REPO_DIR + 'domains/allhmmresbyprot-v32.tsv.gz',
+                    filtered_outfile=REPO_DIR + 'domains/domsbyprot-v32.txt.gz'):
+    """
+    :param fasta_infile: full path to the FASTA file that HMMER was run on (for header information)
+    :param path_to_pfam: full path to a directory containing all Pfam HMMs (required for filtering results)
+    :param pfam_version: version of the Pfam database we are using (default is 32)
+    :param results_directory: full path to directory where tab-delimited HMMER results are stored
+    :param concatenated_file: full path to a file generated by create_allhmmresbyprot()
+    :param filtered_outfile: map the HMM match states to the sequence indices and residues at those indices
+                    across all proteins for which we have results; note that these results are
+                    guaranteed to be complete, pass default gathering thresholds, and have the
+                    required amino acid at match states with high information content
+    :return: None, but print success message once filtered domain results have been written to the specified
+             output file
+    """
+    pass
+####################################################################################################
 if __name__ == "__main__":
 
     # parse command-line arguments
