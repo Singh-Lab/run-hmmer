@@ -50,7 +50,17 @@ def pfam_release_info(current_release_loc='ftp://ftp.ebi.ac.uk/pub/databases/Pfa
 
 
 ####################################################################################################
+def pfam_hmm_download_version(pfam_path, pfam_version='32.0') :
+    pfam_version_major = pfam_version.rstrip().split('.')[0]
+    for directory in [args.pfam_path,
+                        args.pfam_path + 'hmms-v' + pfam_version_major]:
+        if not os.path.isdir(directory):
+            call(['mkdir', directory])
+    output_directory=pfam_path+'hmms-v'+pfam_version_major+'/'
+    hmms_link='ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam'+pfam_version+'/Pfam-A.hmm.gz'
+    pfam_hmm_download(output_directory, pfam_version, hmms_link)
 
+####################################################################################################
 def pfam_hmm_download(output_directory='hmms-v32/', pfam_version='32',
                       hmms_link='ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz'):
     """
@@ -113,20 +123,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download all HMMs from the most recent version of Pfam.')
     parser.add_argument('--pfam_path', type=str, help='Full path to a directory where Pfam HMMs should be stored.',
                         default=script_path + 'pfam/')
+    parser.add_argument('--pfam_version', type=str, help='Specify pfam version to download',
+                        default='current')
     args = parser.parse_args()
 
     if not args.pfam_path.endswith('/'):
         args.pfam_path = args.pfam_path + '/'
 
-    # get information about the most recent version of Pfam:
-    version, date, entries = pfam_release_info()
-    current_pfam_version = version[:version.rfind('.')]
-    sys.stderr.write('Pfam version ' + version + ', released ' + date + ', contains ' + entries + ' total HMMs.\n')
+    if(args.pfam_version.lower() == 'current') :
+        # get information about the most recent version of Pfam:
+        version, date, entries = pfam_release_info()
+        current_pfam_version = version[:version.rfind('.')]
+        sys.stderr.write('Pfam version ' + version + ', released ' + date + ', contains ' + entries + ' total HMMs.\n')
 
-    for directory in [args.pfam_path,
-                      args.pfam_path + 'hmms-v' + current_pfam_version]:
-        if not os.path.isdir(directory):
-            call(['mkdir', directory])
+        for directory in [args.pfam_path,
+                        args.pfam_path + 'hmms-v' + current_pfam_version]:
+            if not os.path.isdir(directory):
+                call(['mkdir', directory])
 
-    # Download the most recent version of Pfam, storing HMMs in the proper directory:
-    pfam_hmm_download(args.pfam_path + 'hmms-v' + current_pfam_version + '/', current_pfam_version)
+        # Download the most recent version of Pfam, storing HMMs in the proper directory:
+        pfam_hmm_download(args.pfam_path + 'hmms-v' + current_pfam_version + '/', current_pfam_version)
+    # Download specific version
+    else :
+        pfam_hmm_download_version(args.pfam_path, args.pfam_version)
