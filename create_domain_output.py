@@ -248,29 +248,29 @@ def create_domsbyprot(fasta_infile,
                 current_sum = {}
 
             # (1) Include only COMPLETE domains:
-            #if not hmm_pos.startswith('1,') or not hmm_pos.endswith(',' + hmm_lengths[hmm_id]):
-            #    continue
+            if not hmm_pos.startswith('1,') or not hmm_pos.endswith(',' + hmm_lengths[hmm_id]):
+                continue
 
             # (1a) Must capture 80% of the domain:
 
-            try : 
-                hstart = hmm_pos.find(',')  if hmm_pos.find(',') > -1 else 1
-                hstop = hmm_pos.rfind(',')+1
-                if( (int(hmm_pos[hstop:]) - int(hmm_pos[0:hstart])) / int(hmm_lengths[hmm_id]) < 0.80 ) :
-                    continue
-            except ValueError: 
-                print("length: "+hmm_lengths[hmm_id])
-                print("start: " +hstart)
-                print("stop: "+ hstop)
-                print("hmm_id: "+hmm_id)
-                print(hmm_pos)
-                exit(1)
+            #try : 
+            #    hstart = hmm_pos.find(',')  if hmm_pos.find(',') > -1 else 1
+            #    hstop = hmm_pos.rfind(',')+1
+            #    if( (int(hmm_pos[hstop:]) - int(hmm_pos[0:hstart])) / int(hmm_lengths[hmm_id]) < 0.80 ) :
+            #        continue
+            #except ValueError: 
+            #    print("length: "+hmm_lengths[hmm_id])
+            #    print("start: " +hstart)
+            #    print("stop: "+ hstop)
+            #    print("hmm_id: "+hmm_id)
+            #    print(hmm_pos)
+            #    exit(1)
 
             # (2) Make sure that the first and last positions are ungapped:
             mstate_to_seq = list(zip(hmm_pos.split(','), list(targ_seq)))
             
-            #if mstate_to_seq[-1][1] == '-' or mstate_to_seq[0][1] == '-':
-            #    continue
+            if mstate_to_seq[-1][1] == '-' or mstate_to_seq[0][1] == '-':
+                continue
 
             # (3) High information-content sites must have the appropriate residue assignment:
             if hmm_id in required_states:
